@@ -13,6 +13,9 @@ $currentUser = current_user();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="<?= e(app_url('assets/images/favicon.svg')) ?>">
+    <link rel="shortcut icon" href="<?= e(app_url('assets/images/favicon.svg')) ?>">
+    <link rel="apple-touch-icon" href="<?= e(app_url('assets/images/favicon.svg')) ?>">
     <link rel="stylesheet" href="<?= e(app_url('assets/css/style.css')) ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <?php if (!empty($extraHead)): ?>
@@ -24,10 +27,9 @@ $currentUser = current_user();
     <header class="site-header">
         <div class="container nav-wrap">
             <a class="brand" href="<?= e(app_url('index.php')) ?>">
-                <span class="brand-mark">M</span>
+                <img class="brand-mark" src="<?= e(app_url('assets/images/favicon.svg')) ?>" alt="<?= e(APP_NAME) ?> logo" width="56" height="56">
                 <span>
                     <strong><?= e(APP_NAME) ?></strong>
-                    <small>Teaching, fellowship, prayer</small>
                 </span>
             </a>
 
@@ -41,6 +43,8 @@ $currentUser = current_user();
                 <a class="<?= e(nav_is('scriptures.php')) ?>" href="<?= e(app_url('scriptures.php')) ?>">Scriptures</a>
                 <a class="<?= e(nav_is('events.php')) ?>" href="<?= e(app_url('events.php')) ?>">Events</a>
                 <a class="<?= e(nav_is('churches.php')) ?>" href="<?= e(app_url('churches.php')) ?>">Churches</a>
+                <a class="<?= e(nav_is('about.php')) ?>" href="<?= e(app_url('about.php')) ?>">About</a>
+                <a class="<?= e(nav_is('leadership.php')) ?>" href="<?= e(app_url('leadership.php')) ?>">Leadership</a>
                 <a class="<?= e(nav_is('community.php')) ?>" href="<?= e(app_url('community.php')) ?>">Live Broadcast</a>
                 <a class="<?= e(nav_is('prayer-requests.php')) ?>" href="<?= e(app_url('prayer-requests.php')) ?>">Prayer</a>
                 <a class="<?= e(nav_is('notifications.php')) ?>" href="<?= e(app_url('notifications.php')) ?>">Notifications</a>
@@ -54,7 +58,7 @@ $currentUser = current_user();
                     <i class="fa-solid fa-moon"></i>
                 </button>
                 <?php if ($currentUser && ($currentUser['role'] ?? 'believer') === 'admin'): ?>
-                    <a class="btn btn-primary" href="<?= e(app_url('auth/logout.php')) ?>">Logout</a>
+                    <a class="btn btn-primary" href="<?= e(app_url('auth/logout.php')) ?>" data-logout-delay>Logout</a>
                 <?php endif; ?>
             </div>
         </div>

@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/bootstrap.php';
 ensure_yahushua_name_study_scriptures();
+ensure_daily_ai_savior_scripture();
 
 $pageTitle = 'Scriptures';
 $query = trim($_GET['q'] ?? '');

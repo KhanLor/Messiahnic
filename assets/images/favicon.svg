@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Messiahnic favicon">
+  <defs>
+    <linearGradient id="blueStroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1f63ff"/>
+      <stop offset="1" stop-color="#0f379d"/>
+    </linearGradient>
+    <linearGradient id="goldFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7df9d"/>
+      <stop offset="0.5" stop-color="#d2a348"/>
+      <stop offset="1" stop-color="#9e6c1f"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ffc64a"/>
+      <stop offset="1" stop-color="#fff5c8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="26" fill="#ffffff"/>
+
+  <!-- Star of David, matching the reference style with bold blue outlines -->
+  <g fill="none" stroke="url(#blueStroke)" stroke-width="11" stroke-linejoin="round">
+    <polygon points="128 18 233 198 23 198"/>
+    <polygon points="128 238 23 58 233 58"/>
+  </g>
+
+  <!-- Menorah body -->
+  <g fill="none" stroke="url(#goldFill)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M128 178 V96"/>
+    <path d="M128 112 C128 97 114 88 100 88"/>
+    <path d="M128 112 C128 97 142 88 156 88"/>
+    <path d="M128 120 C128 99 108 82 84 82"/>
+    <path d="M128 120 C128 99 148 82 172 82"/>
+    <path d="M128 129 C128 101 98 75 64 75"/>
+    <path d="M128 129 C128 101 158 75 192 75"/>
+
+    <path d="M76 165 C104 178 152 178 180 165"/>
+    <path d="M88 152 C110 163 146 163 168 152"/>
+
+    <path d="M104 188 H152"/>
+    <path d="M96 198 H160"/>
+  </g>
+
+  <!-- Columns -->
+  <g fill="url(#goldFill)" stroke="#8b5a18" stroke-width="1.5">
+    <rect x="61" y="79" width="6" height="88" rx="3"/>
+    <rect x="81" y="86" width="6" height="80" rx="3"/>
+    <rect x="97" y="92" width="6" height="74" rx="3"/>
+    <rect x="125" y="95" width="6" height="82" rx="3"/>
+    <rect x="153" y="92" width="6" height="74" rx="3"/>
+    <rect x="169" y="86" width="6" height="80" rx="3"/>
+    <rect x="189" y="79" width="6" height="88" rx="3"/>
+  </g>
+
+  <!-- Lamp cups -->
+  <g fill="url(#goldFill)" stroke="#7f4f10" stroke-width="2">
+    <path d="M57 71 h14 l-2 8 h-10 z"/>
+    <path d="M77 78 h14 l-2 8 h-10 z"/>
+    <path d="M93 84 h14 l-2 8 h-10 z"/>
+    <path d="M121 87 h14 l-2 8 h-10 z"/>
+    <path d="M149 84 h14 l-2 8 h-10 z"/>
+    <path d="M165 78 h14 l-2 8 h-10 z"/>
+    <path d="M185 71 h14 l-2 8 h-10 z"/>
+  </g>
+
+  <!-- Flames -->
+  <g fill="url(#flame)" stroke="#d28a2b" stroke-width="1">
+    <path d="M64 69 C61 64 63 59 65 55 C68 60 69 64 67 69 Z"/>
+    <path d="M84 76 C81 71 83 66 85 62 C88 67 89 71 87 76 Z"/>
+    <path d="M100 82 C97 77 99 72 101 68 C104 73 105 77 103 82 Z"/>
+    <path d="M128 85 C125 80 127 75 129 71 C132 76 133 80 131 85 Z"/>
+    <path d="M156 82 C153 77 155 72 157 68 C160 73 161 77 159 82 Z"/>
+    <path d="M172 76 C169 71 171 66 173 62 C176 67 177 71 175 76 Z"/>
+    <path d="M192 69 C189 64 191 59 193 55 C196 60 197 64 195 69 Z"/>
+  </g>
+
+  <!-- Stem and base -->
+  <g fill="url(#goldFill)" stroke="#7a4b12" stroke-width="2">
+    <path d="M122 177 h12 v26 h-12 z"/>
+    <path d="M110 203 h36 l8 14 h-52 z"/>
+    <path d="M89 217 h78 l11 18 h-100 z"/>
+  </g>
+</svg>

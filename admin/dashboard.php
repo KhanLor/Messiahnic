@@ -51,6 +51,8 @@ include __DIR__ . '/../includes/header.php';
             <a class="card" href="<?= e(app_url('admin/prayer-requests.php')) ?>"><strong>Prayer requests</strong><p class="muted">Approve or delete requests.</p></a>
             <a class="card" href="<?= e(app_url('admin/community.php')) ?>"><strong>Live broadcast</strong><p class="muted">Set the Facebook Live URL shown on the site.</p></a>
             <a class="card" href="<?= e(app_url('admin/notifications.php')) ?>"><strong>Notifications</strong><p class="muted">Edit and publish site notifications.</p></a>
+            <a class="card" href="<?= e(app_url('admin/about.php')) ?>"><strong>About</strong><p class="muted">Manage congregation info, leadership, and faith summary.</p></a>
+            <a class="card" href="<?= e(app_url('admin/leadership.php')) ?>"><strong>Leadership</strong><p class="muted">Manage the leader's name, address, contact number, and Facebook page.</p></a>
         </div>
     </div>
 

@@ -52,13 +52,6 @@ foreach ($churches as $church) {
 
 $bannerImage = app_url('assets/images/church-map-banner.svg');
 $bannerAlt = 'Church branches and location banner';
-foreach ($churches as $church) {
-    if (!empty($church['photo_path'])) {
-        $bannerImage = app_url($church['photo_path']);
-        $bannerAlt = $church['name'] . ' church photo';
-        break;
-    }
-}
 
 include __DIR__ . '/includes/header.php';
 ?>

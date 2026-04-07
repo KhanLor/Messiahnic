@@ -1,6 +1,8 @@
 <?php
 require __DIR__ . '/bootstrap.php';
 ensure_daily_ai_prayers();
+ensure_yahushua_name_study_scriptures();
+ensure_daily_ai_savior_scripture();
 
 $pageTitle = 'Home';
 $stats = [
@@ -14,8 +16,17 @@ $upcomingEvents = [];
 $calendarEvents = [];
 $hasUpcomingEvents = true;
 $latestPrayers = [];
+$dailyAiVerses = [];
+$dailyVersesPerPage = 5;
+$dailyVersePage = max(1, (int) ($_GET['verse_page'] ?? 1));
+$totalDailyVerses = 0;
+$totalDailyVersePages = 1;
 $notifications = [];
 $liveStreamUrl = LIVE_STREAM_URL;
+$heroWorshipImage = app_url('assets/images/home/hero-worship.jpg');
+$heroBibleImage = app_url('assets/images/home/hero-bible.jpg');
+$fellowshipImage = app_url('assets/images/home/fellowship.jpg');
+$studyImage = app_url('assets/images/home/study.jpg');
 
 try {
     $stats['believers'] = (int) db()->query("SELECT COUNT(*) FROM users WHERE role = 'believer' AND status = 'active'")->fetchColumn();
@@ -43,6 +54,18 @@ try {
         $upcomingEvents = db()->query('SELECT * FROM events ORDER BY date DESC, id DESC LIMIT 3')->fetchAll();
     }
     $latestPrayers = db()->query('SELECT pr.id, pr.message, pr.created_at, u.name FROM prayer_requests pr JOIN users u ON u.id = pr.user_id WHERE pr.status = "approved" AND u.role = "admin" ORDER BY pr.created_at DESC, pr.id DESC LIMIT 3')->fetchAll();
+    $totalDailyVerses = (int) db()->query("SELECT COUNT(*) FROM scriptures WHERE content LIKE 'AI Daily Verse:%'")->fetchColumn();
+    $totalDailyVersePages = max(1, (int) ceil($totalDailyVerses / $dailyVersesPerPage));
+    if ($dailyVersePage > $totalDailyVersePages) {
+        $dailyVersePage = $totalDailyVersePages;
+    }
+
+    $dailyVerseOffset = ($dailyVersePage - 1) * $dailyVersesPerPage;
+    $dailyVerseStatement = db()->prepare("SELECT id, book, chapter, verse, content, testament_group FROM scriptures WHERE content LIKE 'AI Daily Verse:%' ORDER BY id DESC LIMIT ? OFFSET ?");
+    $dailyVerseStatement->bindValue(1, $dailyVersesPerPage, PDO::PARAM_INT);
+    $dailyVerseStatement->bindValue(2, $dailyVerseOffset, PDO::PARAM_INT);
+    $dailyVerseStatement->execute();
+    $dailyAiVerses = $dailyVerseStatement->fetchAll();
     $notifications = latest_notifications(4);
 } catch (Throwable $exception) {
     flash('error', 'Database is not ready yet. Import schema.sql and configure your MySQL credentials.');
@@ -52,8 +75,11 @@ $believersDisplay = $stats['believers'] < 100 ? '100+' : number_format($stats['b
 
 include __DIR__ . '/includes/header.php';
 ?>
-<section class="hero">
-    <div class="hero-copy">
+<section class="hero home-hero" data-home-hero>
+    <span class="home-hero-glow home-hero-glow-a" aria-hidden="true"></span>
+    <span class="home-hero-glow home-hero-glow-b" aria-hidden="true"></span>
+
+    <div class="hero-copy home-hero-copy">
         <span class="badge"><i class="fa-solid fa-scroll"></i> Yahushua-centered fellowship</span>
         <h1>Learn, gather, and grow together in the faith.</h1>
         <p>
@@ -65,17 +91,17 @@ include __DIR__ . '/includes/header.php';
             <a class="btn btn-ghost" href="<?= e(app_url('prayer-requests.php')) ?>">Read daily prayers</a>
         </div>
 
-        <div class="hero-stats">
-            <div class="stat"><strong><?= e($believersDisplay) ?></strong><span>Believers</span></div>
-            <div class="stat"><strong><?= number_format($stats['teachings']) ?></strong><span>Teachings</span></div>
-            <div class="stat"><strong><?= number_format($stats['events']) ?></strong><span>Events</span></div>
+        <div class="hero-stats home-hero-stats">
+            <div class="stat home-stat"><strong class="home-stat-number" data-count-up data-count-target="<?= (int) $stats['believers'] ?>" data-count-suffix="+" data-count-min="100"><?= e($believersDisplay) ?></strong><span>Believers</span></div>
+            <div class="stat home-stat"><strong class="home-stat-number" data-count-up data-count-target="<?= (int) $stats['teachings'] ?>"><?= e(number_format($stats['teachings'])) ?></strong><span>Teachings</span></div>
+            <div class="stat home-stat"><strong class="home-stat-number" data-count-up data-count-target="<?= (int) $stats['events'] ?>"><?= e(number_format($stats['events'])) ?></strong><span>Events</span></div>
         </div>
     </div>
 
-    <div class="hero-card">
+    <div class="hero-card home-hero-card" data-home-card>
         <div class="hero-gallery">
-            <img src="https://images.pexels.com/photos/8468475/pexels-photo-8468475.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Believers gathered in worship">
-            <img src="<?= e(app_url('assets/images/scripture-study.svg')) ?>" alt="Scripture study illustration">
+            <img src="<?= e($heroWorshipImage) ?>" alt="Believers gathered in worship">
+            <img src="<?= e($heroBibleImage) ?>" alt="Open Bible and study materials">
         </div>
         <h3>Community snapshot</h3>
         <p class="muted">Recent activity, approved prayer requests, and upcoming gatherings.</p>
@@ -118,11 +144,11 @@ include __DIR__ . '/includes/header.php';
     </div>
     <div class="grid cols-2">
         <div class="picture-card">
-            <img src="<?= e(app_url('assets/images/fellowship-scene.svg')) ?>" alt="Community fellowship scene">
+            <img src="<?= e($fellowshipImage) ?>" alt="Community fellowship scene">
             <p class="muted">Gathering in unity and encouragement.</p>
         </div>
         <div class="picture-card">
-            <img src="<?= e(app_url('assets/images/scripture-study.svg')) ?>" alt="Scripture learning scene">
+            <img src="<?= e($studyImage) ?>" alt="Scripture learning scene">
             <p class="muted">Learning and growing through scripture together.</p>
         </div>
     </div>
@@ -220,7 +246,110 @@ include __DIR__ . '/includes/header.php';
     </div>
 </section>
 
+<section class="section panel">
+    <div class="section-title">
+        <h2>Daily verses</h2>
+        <a class="muted" href="<?= e(app_url('scriptures.php')) ?>">Scripture library</a>
+    </div>
+    <div class="list-stack">
+        <?php foreach ($dailyAiVerses as $verse): ?>
+            <?php $verseContent = preg_replace('/^AI Daily Verse:\s*/', '', (string) $verse['content']) ?: (string) $verse['content']; ?>
+            <article class="stack-item">
+                <div class="meta">
+                    <span class="badge"><?= e($verse['testament_group']) ?></span>
+                    <span><?= e($verse['book']) ?> <?= e((string) $verse['chapter']) ?>:<?= e($verse['verse']) ?></span>
+                </div>
+                <p><?= e($verseContent) ?></p>
+                <div class="actions">
+                    <button class="btn btn-ghost verse-voice-btn" type="button" data-voice-text="<?= e($verseContent) ?>">Play Voice</button>
+                </div>
+            </article>
+        <?php endforeach; ?>
+        <?php if (!$dailyAiVerses): ?>
+            <p class="muted">Daily verses will appear here automatically.</p>
+        <?php endif; ?>
+    </div>
+
+    <?php if ($totalDailyVersePages > 1): ?>
+        <nav class="pagination" aria-label="Daily verses pages">
+            <?php if ($dailyVersePage > 1): ?>
+                <a class="page-link" href="<?= e(app_url('index.php?verse_page=' . ($dailyVersePage - 1))) ?>">Previous</a>
+            <?php endif; ?>
+
+            <?php for ($i = 1; $i <= $totalDailyVersePages; $i++): ?>
+                <a class="page-link <?= $i === $dailyVersePage ? 'is-active' : '' ?>" href="<?= e(app_url('index.php?verse_page=' . $i)) ?>"><?= (int) $i ?></a>
+            <?php endfor; ?>
+
+            <?php if ($dailyVersePage < $totalDailyVersePages): ?>
+                <a class="page-link" href="<?= e(app_url('index.php?verse_page=' . ($dailyVersePage + 1))) ?>">Next</a>
+            <?php endif; ?>
+        </nav>
+    <?php endif; ?>
+</section>
+
 <script>
+    (() => {
+        const voiceButtons = document.querySelectorAll('.verse-voice-btn');
+        if (!voiceButtons.length || !('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+            return;
+        }
+
+        let activeButton = null;
+
+        function resetButton(button) {
+            if (!button) {
+                return;
+            }
+            button.textContent = 'Play Voice';
+            button.dataset.playing = '0';
+        }
+
+        voiceButtons.forEach((button) => {
+            button.dataset.playing = '0';
+            button.addEventListener('click', () => {
+                const isPlaying = button.dataset.playing === '1';
+                if (isPlaying) {
+                    window.speechSynthesis.cancel();
+                    resetButton(button);
+                    activeButton = null;
+                    return;
+                }
+
+                if (activeButton && activeButton !== button) {
+                    resetButton(activeButton);
+                }
+
+                window.speechSynthesis.cancel();
+
+                const text = button.getAttribute('data-voice-text') || '';
+                if (!text.trim()) {
+                    return;
+                }
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-PH';
+                utterance.rate = 0.9;
+                utterance.onend = () => {
+                    resetButton(button);
+                    if (activeButton === button) {
+                        activeButton = null;
+                    }
+                };
+                utterance.onerror = () => {
+                    resetButton(button);
+                    if (activeButton === button) {
+                        activeButton = null;
+                    }
+                };
+
+                button.textContent = 'Stop Voice';
+                button.dataset.playing = '1';
+                activeButton = button;
+                window.speechSynthesis.speak(utterance);
+            });
+        });
+    })();
+
     (() => {
         const eventsByDate = <?= json_encode($calendarEvents, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const calendarEl = document.getElementById('homeEventsCalendar');

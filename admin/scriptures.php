@@ -2,15 +2,21 @@
 require __DIR__ . '/../bootstrap.php';
 require_admin();
 ensure_yahushua_name_study_scriptures();
+ensure_daily_ai_savior_scripture();
 
 $pageTitle = 'Manage Scriptures';
 $error = null;
-$editingVerse = null;
 
 if (is_post()) {
     try {
         verify_csrf();
         $action = $_POST['action'] ?? 'create';
+
+        if ($action === 'generate_daily') {
+            ensure_daily_ai_savior_scripture();
+            flash('success', 'Today\'s 10 AI Yahushua-focused verses are ready.');
+            redirect('admin/scriptures.php');
+        }
 
         if ($action === 'delete') {
             $verseId = (int) ($_POST['verse_id'] ?? 0);
@@ -18,37 +24,6 @@ if (is_post()) {
             $statement->execute([$verseId]);
             flash('success', 'Verse deleted.');
             redirect('admin/scriptures.php');
-        }
-
-        $verseId = (int) ($_POST['verse_id'] ?? 0);
-
-        $book = trim($_POST['book'] ?? '');
-        $chapter = (int) ($_POST['chapter'] ?? 0);
-        $verse = trim($_POST['verse'] ?? '');
-        $content = trim($_POST['content'] ?? '');
-        $group = trim($_POST['testament_group'] ?? '');
-        $highlighted = isset($_POST['is_highlighted']) ? 1 : 0;
-
-        if ($book === '' || $chapter <= 0 || $verse === '' || $content === '' || $group === '') {
-            throw new RuntimeException('All scripture fields are required.');
-        }
-
-        if (!in_array($group, ['Torah', 'Prophets', 'Writings', 'Gospel'], true)) {
-            throw new RuntimeException('Invalid scripture section.');
-        }
-
-        if ($action === 'update') {
-            if ($verseId <= 0) {
-                throw new RuntimeException('Verse not found for editing.');
-            }
-
-            $statement = db()->prepare('UPDATE scriptures SET book = ?, chapter = ?, verse = ?, content = ?, testament_group = ?, is_highlighted = ? WHERE id = ?');
-            $statement->execute([$book, $chapter, $verse, $content, $group, $highlighted, $verseId]);
-            flash('success', 'Scripture verse updated.');
-        } else {
-            $statement = db()->prepare('INSERT INTO scriptures (book, chapter, verse, content, testament_group, is_highlighted) VALUES (?, ?, ?, ?, ?, ?)');
-            $statement->execute([$book, $chapter, $verse, $content, $group, $highlighted]);
-            flash('success', 'Scripture verse added.');
         }
 
         clear_old();
@@ -66,40 +41,26 @@ try {
     flash('error', 'Scriptures could not be loaded yet.');
 }
 
-$editId = (int) ($_GET['edit'] ?? 0);
-if ($editId > 0) {
-    $statement = db()->prepare('SELECT * FROM scriptures WHERE id = ? LIMIT 1');
-    $statement->execute([$editId]);
-    $editingVerse = $statement->fetch() ?: null;
-
-    if (!$editingVerse) {
-        flash('error', 'Verse not found for editing.');
-        redirect('admin/scriptures.php');
-    }
-}
-
-$isEditMode = $editingVerse !== null;
-$formAction = $isEditMode ? 'update' : 'create';
-$submitLabel = $isEditMode ? 'Update verse' : 'Save verse';
-$bookValue = old('book', $editingVerse['book'] ?? '');
-$chapterValue = old('chapter', isset($editingVerse['chapter']) ? (string) $editingVerse['chapter'] : '');
-$verseValue = old('verse', $editingVerse['verse'] ?? '');
-$contentValue = old('content', $editingVerse['content'] ?? '');
-$groupValue = old('testament_group', $editingVerse['testament_group'] ?? 'Torah');
-$highlightedValue = isset($_SESSION['old']['is_highlighted']) ? '1' : ((int) ($editingVerse['is_highlighted'] ?? 0) === 1 ? '1' : '0');
-
 include __DIR__ . '/../includes/header.php';
 ?>
 <section class="grid cols-2">
     <section class="panel">
         <div class="section-title">
-            <h2><?= $isEditMode ? 'Edit scripture verse' : 'Add scripture verse' ?></h2>
-            <span class="badge">Highlighted passages</span>
+            <h2>AI scripture every day</h2>
+            <span class="badge">Yahushua-focused verses</span>
         </div>
         <?php if ($error): ?>
             <div class="alert alert-error"><?= e($error) ?></div>
         <?php endif; ?>
-        <button class="btn btn-primary" type="button" data-open-modal="scriptureModal"><?= $isEditMode ? 'Open edit form' : 'Open scripture form' ?></button>
+        <p class="muted" style="margin-bottom: 1rem;">
+            10 verses are generated automatically each day with a focus on why Yahushua is our true Savior.
+            Manual typing is disabled on this page.
+        </p>
+        <form method="post">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="generate_daily">
+            <button class="btn btn-primary" type="submit">Generate today's 10 AI verses</button>
+        </form>
     </section>
 
     <aside class="panel">
@@ -119,7 +80,6 @@ include __DIR__ . '/../includes/header.php';
                     </div>
                     <p><?= e($verse['content']) ?></p>
                     <div class="actions">
-                        <a class="btn btn-primary" href="<?= e(app_url('admin/scriptures.php?edit=' . (int) $verse['id'])) ?>">Edit</a>
                         <form method="post" onsubmit="return confirm('Delete this verse?');">
                             <?= csrf_field() ?>
                             <input type="hidden" name="action" value="delete">
@@ -135,63 +95,5 @@ include __DIR__ . '/../includes/header.php';
         </div>
     </aside>
 </section>
-
-<div class="modal <?= ($error || $isEditMode) ? 'modal-open' : '' ?>" data-modal="scriptureModal" aria-hidden="<?= ($error || $isEditMode) ? 'false' : 'true' ?>">
-    <div class="modal-backdrop" data-close-modal></div>
-    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="scriptureModalTitle">
-        <div class="section-title">
-            <h2 id="scriptureModalTitle"><?= $isEditMode ? 'Edit scripture verse' : 'Add scripture verse' ?></h2>
-            <button class="modal-close" type="button" data-close-modal aria-label="Close modal">×</button>
-        </div>
-
-        <form class="form" method="post">
-            <?= csrf_field() ?>
-            <input type="hidden" name="action" value="<?= e($formAction) ?>">
-            <?php if ($isEditMode): ?>
-                <input type="hidden" name="verse_id" value="<?= (int) $editingVerse['id'] ?>">
-            <?php endif; ?>
-            <div class="field-grid">
-                <label>
-                    Book
-                    <input type="text" name="book" value="<?= e($bookValue) ?>" required>
-                </label>
-                <label>
-                    Testament group
-                    <select name="testament_group">
-                        <option value="Torah" <?= $groupValue === 'Torah' ? 'selected' : '' ?>>Torah</option>
-                        <option value="Prophets" <?= $groupValue === 'Prophets' ? 'selected' : '' ?>>Prophets</option>
-                        <option value="Writings" <?= $groupValue === 'Writings' ? 'selected' : '' ?>>Writings</option>
-                        <option value="Gospel" <?= $groupValue === 'Gospel' ? 'selected' : '' ?>>Gospel</option>
-                    </select>
-                </label>
-            </div>
-            <div class="field-grid">
-                <label>
-                    Chapter
-                    <input type="number" name="chapter" min="1" value="<?= e($chapterValue) ?>" required>
-                </label>
-                <label>
-                    Verse
-                    <input type="text" name="verse" value="<?= e($verseValue) ?>" required>
-                </label>
-            </div>
-            <label>
-                Content
-                <textarea name="content" required><?= e($contentValue) ?></textarea>
-            </label>
-            <label>
-                <input type="checkbox" name="is_highlighted" value="1" <?= $highlightedValue === '1' ? 'checked' : '' ?>>
-                Highlight this passage
-            </label>
-            <div class="actions">
-                <button class="btn btn-primary" type="submit"><?= e($submitLabel) ?></button>
-                <?php if ($isEditMode): ?>
-                    <a class="btn btn-ghost" href="<?= e(app_url('admin/scriptures.php')) ?>">Cancel edit</a>
-                <?php endif; ?>
-                <button class="btn btn-ghost" type="button" data-close-modal>Close</button>
-            </div>
-        </form>
-    </div>
-</div>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

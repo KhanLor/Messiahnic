@@ -425,7 +425,7 @@ function ensure_yahushua_name_study_scriptures(): void
         ['book' => 'Matthew', 'chapter' => 1, 'verse' => '21', 'content' => 'The child is given the name Yahushua, for he will save his people from their sins.', 'group' => 'Gospel'],
         ['book' => 'Luke', 'chapter' => 1, 'verse' => '31', 'content' => 'The messenger announces a son and says his name will be Yahushua.', 'group' => 'Gospel'],
         ['book' => 'Acts', 'chapter' => 4, 'verse' => '12', 'content' => 'Salvation is found in no other name given among people by which we must be saved.', 'group' => 'Gospel'],
-        ['book' => 'Matthew', 'chapter' => 1, 'verse' => '23', 'content' => 'Immanuel means "God with us," showing the promised presence of the Most High through the Messiah.', 'group' => 'Gospel'],
+        ['book' => 'Matthew', 'chapter' => 1, 'verse' => '23', 'content' => 'Immanuel means "Almighty Father with us," showing the promised presence of the Most High through the Messiah.', 'group' => 'Gospel'],
         ['book' => 'Acts', 'chapter' => 26, 'verse' => '14', 'content' => 'Shaul hears the risen Messiah call him in Hebrew, showing personal authority and covenant identity.', 'group' => 'Gospel'],
         ['book' => 'John', 'chapter' => 19, 'verse' => '19-20', 'content' => 'Pilate\'s inscription over the cross identifies the Nazarene and is written in multiple languages for all to read.', 'group' => 'Gospel'],
         ['book' => 'Exodus', 'chapter' => 23, 'verse' => '21', 'content' => 'The people are told to obey the One sent with the Name, because rebellion against him is serious.', 'group' => 'Torah'],
@@ -451,6 +451,171 @@ function ensure_yahushua_name_study_scriptures(): void
             $item['group'],
         ]);
     }
+}
+
+function ensure_daily_ai_savior_scripture(): void
+{
+    ensure_site_settings_table();
+
+    // Normalize older rows to keep Yahushua wording consistent.
+    db()->exec('UPDATE scriptures SET content = REPLACE(content, "Jesus", "Yahushua")');
+    db()->exec('UPDATE scriptures SET content = REPLACE(content, "God", "Almighty Father")');
+
+    $todaySqlDate = philippines_now()->format('Y-m-d');
+    $lastGeneratedDate = get_setting('daily_ai_scripture_date', '');
+    $quotaDate = get_setting('daily_ai_scripture_quota_date', '');
+    $quotaCount = (int) get_setting('daily_ai_scripture_quota_count', '0');
+
+    if ($quotaDate !== $todaySqlDate) {
+        $quotaCount = 0;
+    }
+
+    $dailyTarget = 10;
+    if ($lastGeneratedDate === $todaySqlDate && $quotaCount >= $dailyTarget) {
+        return;
+    }
+
+    $dailyPack = [
+        [
+            'book' => 'Acts',
+            'chapter' => 4,
+            'verse' => '12',
+            'content' => 'AI Daily Verse: Yahushua is our true Savior, and salvation is found in no other name under heaven for mankind.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => 'John',
+            'chapter' => 14,
+            'verse' => '6',
+            'content' => 'AI Daily Verse: Yahushua declares the way, the truth, and the life, revealing that rescue and life come through him.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => 'Matthew',
+            'chapter' => 1,
+            'verse' => '21',
+            'content' => 'AI Daily Verse: Yahushua saves his people from sin, showing his mission as the true Savior promised from the beginning.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => '1 John',
+            'chapter' => 4,
+            'verse' => '14',
+            'content' => 'AI Daily Verse: The testimony affirms Yahushua as Savior, sent to bring life, peace, and reconciliation.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => 'Romans',
+            'chapter' => 10,
+            'verse' => '9',
+            'content' => 'AI Daily Verse: Trusting and confessing Yahushua brings salvation and establishes faithful obedience.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => 'Philippians',
+            'chapter' => 2,
+            'verse' => '9-11',
+            'content' => 'AI Daily Verse: Yahushua is exalted above all names, and every knee will bow in reverence to his authority.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => 'Hebrews',
+            'chapter' => 7,
+            'verse' => '25',
+            'content' => 'AI Daily Verse: Yahushua saves completely those who come near through him, and his intercession remains faithful.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => 'John',
+            'chapter' => 3,
+            'verse' => '16-17',
+            'content' => 'AI Daily Verse: Through Yahushua, the world is offered life and deliverance, revealing the mercy and purpose of the Almighty Father.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => 'Luke',
+            'chapter' => 19,
+            'verse' => '10',
+            'content' => 'AI Daily Verse: Yahushua came to seek and save the lost, showing his mission as true Savior.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => 'Titus',
+            'chapter' => 2,
+            'verse' => '13',
+            'content' => 'AI Daily Verse: Believers wait in hope for Yahushua, whose appearing confirms salvation and faithful expectation.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => '2 Timothy',
+            'chapter' => 1,
+            'verse' => '10',
+            'content' => 'AI Daily Verse: Yahushua brings life and immortality to light, revealing the power of salvation.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => 'Isaiah',
+            'chapter' => 53,
+            'verse' => '5',
+            'content' => 'AI Daily Verse: The suffering servant prophecy points to Yahushua, through whom healing, peace, and restoration are given.',
+            'group' => 'Prophets',
+        ],
+        [
+            'book' => 'John',
+            'chapter' => 11,
+            'verse' => '25',
+            'content' => 'AI Daily Verse: Yahushua is the resurrection and the life, assuring victory over death to those who trust him.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => 'Acts',
+            'chapter' => 13,
+            'verse' => '38-39',
+            'content' => 'AI Daily Verse: Through Yahushua, forgiveness and justification are proclaimed to all who believe.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => '1 Peter',
+            'chapter' => 1,
+            'verse' => '3',
+            'content' => 'AI Daily Verse: Through Yahushua, living hope rises by resurrection power and covenant mercy.',
+            'group' => 'Gospel',
+        ],
+        [
+            'book' => 'Revelation',
+            'chapter' => 1,
+            'verse' => '5',
+            'content' => 'AI Daily Verse: Yahushua, faithful witness and ruler, loves and frees believers from sin by his sacrifice.',
+            'group' => 'Gospel',
+        ],
+    ];
+
+    $startIndex = (int) (abs(crc32($todaySqlDate)) % count($dailyPack));
+    $remainingCount = max(0, $dailyTarget - $quotaCount);
+    $dailyCount = min($remainingCount, count($dailyPack));
+
+    if ($dailyCount <= 0) {
+        set_setting('daily_ai_scripture_date', $todaySqlDate);
+        set_setting('daily_ai_scripture_quota_date', $todaySqlDate);
+        set_setting('daily_ai_scripture_quota_count', (string) $quotaCount);
+        return;
+    }
+
+    $insertStatement = db()->prepare('INSERT INTO scriptures (book, chapter, verse, content, testament_group, is_highlighted) VALUES (?, ?, ?, ?, ?, 1)');
+    for ($offset = 0; $offset < $dailyCount; $offset++) {
+        $item = $dailyPack[($startIndex + $quotaCount + $offset) % count($dailyPack)];
+        $insertStatement->execute([
+            $item['book'],
+            $item['chapter'],
+            $item['verse'],
+            $item['content'],
+            $item['group'],
+        ]);
+    }
+
+    set_setting('daily_ai_scripture_date', $todaySqlDate);
+    set_setting('daily_ai_scripture_quota_date', $todaySqlDate);
+    set_setting('daily_ai_scripture_quota_count', (string) ($quotaCount + $dailyCount));
 }
 
 function upload_file(array $file, string $folder, array $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'pdf']): ?string

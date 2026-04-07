@@ -32,8 +32,8 @@ ALTER TABLE church_locations ADD COLUMN pastor_name VARCHAR(180) NULL AFTER city
 
 ## Default admin
 
-- Email: `admin@messiahnic.local`
-- Password: `Admin123!`
+- Username: `Admin` (or Email: `admin@messiahnic.local`)
+- Password: `123`
 
 ## Included modules
 

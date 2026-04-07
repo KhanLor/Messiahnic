@@ -14,6 +14,7 @@
                     <li><a href="<?= e(app_url('scriptures.php')) ?>">Scriptures</a></li>
                     <li><a href="<?= e(app_url('events.php')) ?>">Events</a></li>
                     <li><a href="<?= e(app_url('churches.php')) ?>">Churches</a></li>
+                    <li><a href="<?= e(app_url('about.php')) ?>">About</a></li>
                 </ul>
             </div>
             <div>

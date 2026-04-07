@@ -65,6 +65,33 @@ img {
     flex-direction: column;
 }
 
+body.motion-ready .page-shell {
+    animation: pageFadeIn 0.5s ease;
+}
+
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(18px) scale(0.99);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+@keyframes pageFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .site-header {
     position: sticky;
     top: 0;
@@ -103,11 +130,8 @@ img {
     width: 2.8rem;
     height: 2.8rem;
     border-radius: 16px;
-    display: grid;
-    place-items: center;
-    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-    color: #fff;
-    font-weight: 800;
+    display: block;
+    object-fit: cover;
     box-shadow: var(--shadow);
 }
 
@@ -189,6 +213,125 @@ img {
     background: var(--surface);
     border: 1px solid var(--border);
     box-shadow: var(--shadow);
+}
+
+.home-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+}
+
+.home-hero-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(8px);
+    opacity: 0.26;
+    z-index: -1;
+    pointer-events: none;
+    animation: homeGlowFloat 9s ease-in-out infinite;
+}
+
+.home-hero-glow-a {
+    width: 320px;
+    height: 320px;
+    left: -110px;
+    top: -95px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 75%, transparent), transparent 68%);
+}
+
+.home-hero-glow-b {
+    width: 280px;
+    height: 280px;
+    right: -90px;
+    bottom: -110px;
+    background: radial-gradient(circle, rgba(34, 120, 95, 0.35), transparent 70%);
+    animation-delay: 1.6s;
+}
+
+.home-hero-copy {
+    animation: homeCopyEnter 0.75s cubic-bezier(.2,.8,.2,1);
+}
+
+.home-hero-card {
+    position: relative;
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    animation: homeCardEnter 0.85s cubic-bezier(.2,.8,.2,1);
+    border: 1px solid transparent;
+    background:
+        linear-gradient(var(--surface), var(--surface)) padding-box,
+        linear-gradient(120deg, color-mix(in srgb, var(--accent) 86%, transparent), rgba(52, 110, 198, 0.52), color-mix(in srgb, var(--accent-strong) 85%, transparent)) border-box;
+    background-size: 100% 100%, 240% 240%;
+    animation: homeCardEnter 0.85s cubic-bezier(.2,.8,.2,1), homeCardBorderShift 8s linear infinite;
+}
+
+.home-hero-card:hover {
+    box-shadow: 0 30px 72px rgba(63, 46, 23, 0.2);
+}
+
+.home-stat {
+    animation: homeStatRise 0.6s ease both;
+}
+
+.home-stat:nth-child(2) {
+    animation-delay: 0.08s;
+}
+
+.home-stat:nth-child(3) {
+    animation-delay: 0.16s;
+}
+
+@keyframes homeGlowFloat {
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-10px) scale(1.04);
+    }
+}
+
+@keyframes homeCopyEnter {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes homeCardEnter {
+    from {
+        opacity: 0;
+        transform: translateY(22px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes homeCardBorderShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
+}
+
+@keyframes homeStatRise {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .hero-gallery {
@@ -403,6 +546,107 @@ img {
 .alert-success { border-color: rgba(31, 122, 77, 0.3); }
 .alert-error { border-color: rgba(179, 38, 30, 0.3); }
 .alert-info { border-color: rgba(68, 105, 210, 0.25); }
+
+
+.auth-transition {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--bg) 86%, rgba(0, 0, 0, 0.35));
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.auth-transition.is-visible {
+    opacity: 1;
+}
+
+.auth-transition-card {
+    width: min(420px, calc(100% - 2rem));
+    background: var(--surface-strong);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.auth-transition-spinner {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 4px solid color-mix(in srgb, var(--accent-soft) 75%, transparent);
+    border-top-color: var(--accent);
+    margin: 0 auto 0.9rem;
+    animation: authSpin 0.8s linear infinite;
+}
+
+.auth-transition-text {
+    font-size: 1.02rem;
+    font-weight: 700;
+}
+
+.auth-transition-progress {
+    height: 6px;
+    border-radius: 999px;
+    margin-top: 0.8rem;
+    background: color-mix(in srgb, var(--accent-soft) 45%, transparent);
+    overflow: hidden;
+}
+
+.auth-transition-progress > span {
+    display: block;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+    transform-origin: left center;
+    animation: authProgress 3s linear forwards;
+}
+
+@keyframes authSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes authProgress {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.motion-ready .page-shell {
+        animation: none;
+    }
+
+    .home-hero-copy,
+    .home-hero-card,
+    .home-stat,
+    .home-hero-glow {
+        animation: none;
+    }
+
+    .reveal-on-scroll,
+    .reveal-on-scroll.is-visible {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .auth-transition,
+    .auth-transition-spinner,
+    .auth-transition-progress > span {
+        animation: none;
+        transition: none;
+    }
+}
 
 .form {
     display: grid;

@@ -43,7 +43,7 @@ include __DIR__ . '/includes/header.php';
         </div>
         <p id="prayerSlotMessage"><?= e($currentPrayer ?? 'Prayer will appear here automatically.') ?></p>
         <div class="actions">
-            <button class="btn btn-primary" type="button" id="playPrayerVoice">Play AI Voice</button>
+            <button class="btn btn-primary" type="button" id="playPrayerVoice">Play Voice</button>
         </div>
     </div>
 </section>
@@ -63,7 +63,6 @@ include __DIR__ . '/includes/header.php';
         }
 
         let selectedSlot = defaultSlot;
-        let voiceTimer = null;
 
         const cleanMessage = (value) => String(value || '').replace(/^\w+ Prayer:\s*/, '').trim();
 
@@ -131,29 +130,15 @@ include __DIR__ . '/includes/header.php';
             }
 
             window.speechSynthesis.cancel();
-            if (voiceTimer) {
-                clearTimeout(voiceTimer);
-                voiceTimer = null;
-            }
 
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-PH';
             utterance.rate = 0.9;
             utterance.pitch = 1;
             utterance.onend = () => {
-                if (voiceTimer) {
-                    clearTimeout(voiceTimer);
-                    voiceTimer = null;
-                }
             };
 
             window.speechSynthesis.speak(utterance);
-
-            // Keep prayer voice playback in a fixed 30-second window.
-            voiceTimer = setTimeout(() => {
-                window.speechSynthesis.cancel();
-                voiceTimer = null;
-            }, 30000);
         });
 
         renderSlot(defaultSlot);

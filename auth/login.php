@@ -7,15 +7,15 @@ $error = null;
 if (is_post()) {
     try {
         verify_csrf();
-        $email = trim($_POST['email'] ?? '');
+        $identity = trim($_POST['identity'] ?? '');
         $password = $_POST['password'] ?? '';
 
-        if ($email === '' || $password === '') {
-            throw new RuntimeException('Email and password are required.');
+        if ($identity === '' || $password === '') {
+            throw new RuntimeException('Username or email and password are required.');
         }
 
-        $statement = db()->prepare('SELECT * FROM users WHERE email = ? LIMIT 1');
-        $statement->execute([$email]);
+        $statement = db()->prepare('SELECT * FROM users WHERE role = "admin" AND (name = ? OR email = ?) LIMIT 1');
+        $statement->execute([$identity, $identity]);
         $user = $statement->fetch();
 
         if (!$user || !password_verify($password, $user['password'])) {
@@ -54,11 +54,11 @@ include __DIR__ . '/../includes/header.php';
         <div class="alert alert-error"><?= e($error) ?></div>
     <?php endif; ?>
 
-    <form class="form" method="post">
+    <form class="form" method="post" data-login-delay>
         <?= csrf_field() ?>
         <label>
-            Email
-            <input type="email" name="email" value="<?= e(old('email')) ?>" required>
+            Username or Email
+            <input type="text" name="identity" value="<?= e(old('identity')) ?>" required>
         </label>
         <label>
             Password

@@ -126,5 +126,5 @@ CREATE TABLE IF NOT EXISTS church_locations (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO users (name, email, password, role, status, testimony, bio)
-SELECT 'Admin', 'admin@messiahnic.local', '$2y$10$Qj3ChR00zQYAPhuzg.2iKOGfJQHVE96AoiVuJM0QejQAVNYbTjnke', 'admin', 'active', 'Set a new password after first login.', 'Site administrator'
+SELECT 'Admin', 'admin@messiahnic.local', '$2y$10$KRZk2wrlLbsGHT3p5YaQ8uq5bI7bj/kRjx6cXXqtzAKoFj6Hl6Xe6', 'admin', 'active', 'Set a new password after first login.', 'Site administrator'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'admin@messiahnic.local');
