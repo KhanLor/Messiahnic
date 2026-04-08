@@ -15,6 +15,7 @@ $normalizeExecutiveMembers = static function ($raw): array {
             if (is_array($item)) {
                 $normalized[] = [
                     'name' => trim((string) ($item['name'] ?? '')),
+                    'address' => trim((string) ($item['address'] ?? '')),
                     'contact_number' => trim((string) ($item['contact_number'] ?? '')),
                     'facebook_page' => trim((string) ($item['facebook_page'] ?? '')),
                     'picture' => trim((string) ($item['picture'] ?? '')),
@@ -27,6 +28,7 @@ $normalizeExecutiveMembers = static function ($raw): array {
                 if ($name !== '') {
                     $normalized[] = [
                         'name' => $name,
+                        'address' => '',
                         'contact_number' => '',
                         'facebook_page' => '',
                         'picture' => '',
@@ -52,6 +54,7 @@ if (is_post()) {
         $leaderContactNumber = trim($_POST['leadership_contact_number'] ?? '');
         $leaderFacebookPage = trim($_POST['leadership_facebook_page'] ?? '');
         $memberNames = $_POST['executive_member_name'] ?? [];
+        $memberAddresses = $_POST['executive_member_address'] ?? [];
         $memberContacts = $_POST['executive_member_contact_number'] ?? [];
         $memberFacebookPages = $_POST['executive_member_facebook_page'] ?? [];
         $memberExistingPictures = $_POST['executive_member_existing_picture'] ?? [];
@@ -64,6 +67,9 @@ if (is_post()) {
         if (!is_array($memberContacts)) {
             $memberContacts = [];
         }
+        if (!is_array($memberAddresses)) {
+            $memberAddresses = [];
+        }
         if (!is_array($memberFacebookPages)) {
             $memberFacebookPages = [];
         }
@@ -75,9 +81,10 @@ if (is_post()) {
         }
 
         $executiveMembers = [];
-        $totalMembers = max(count($memberNames), count($memberContacts), count($memberFacebookPages), count($memberExistingPictures));
+        $totalMembers = max(count($memberNames), count($memberAddresses), count($memberContacts), count($memberFacebookPages), count($memberExistingPictures));
         for ($index = 0; $index < $totalMembers; $index++) {
             $memberName = trim((string) ($memberNames[$index] ?? ''));
+            $memberAddress = trim((string) ($memberAddresses[$index] ?? ''));
             $memberContactNumber = trim((string) ($memberContacts[$index] ?? ''));
             $memberFacebookPage = trim((string) ($memberFacebookPages[$index] ?? ''));
             $memberPicture = trim((string) ($memberExistingPictures[$index] ?? ''));
@@ -110,7 +117,7 @@ if (is_post()) {
                 }
             }
 
-            if ($memberName === '' && $memberContactNumber === '' && $memberFacebookPage === '' && $memberPicture === '') {
+            if ($memberName === '' && $memberAddress === '' && $memberContactNumber === '' && $memberFacebookPage === '' && $memberPicture === '') {
                 continue;
             }
 
@@ -120,6 +127,7 @@ if (is_post()) {
 
             $executiveMembers[] = [
                 'name' => $memberName,
+                'address' => $memberAddress,
                 'contact_number' => $memberContactNumber,
                 'facebook_page' => $memberFacebookPage,
                 'picture' => $memberPicture,
@@ -185,6 +193,7 @@ $executiveMembersValue = $previousExecutiveMembers;
 if (!$executiveMembersValue) {
     $executiveMembersValue = [[
         'name' => '',
+        'address' => '',
         'contact_number' => '',
         'facebook_page' => '',
         'picture' => '',
@@ -230,6 +239,10 @@ include __DIR__ . '/../includes/header.php';
                     <label>
                         Name
                         <input type="text" name="executive_member_name[]" value="<?= e((string) ($member['name'] ?? '')) ?>" placeholder="Executive member name">
+                    </label>
+                    <label>
+                        Address
+                        <input type="text" name="executive_member_address[]" value="<?= e((string) ($member['address'] ?? '')) ?>" placeholder="Member address">
                     </label>
                     <label>
                         Contact Number
@@ -310,6 +323,7 @@ document.addEventListener('DOMContentLoaded', function () {
         row.innerHTML =
             '<input type="hidden" name="executive_member_existing_picture[]" value="">' +
             '<label>Name<input type="text" name="executive_member_name[]" value="" placeholder="Executive member name"></label>' +
+            '<label>Address<input type="text" name="executive_member_address[]" value="" placeholder="Member address"></label>' +
             '<label>Contact Number<input type="tel" name="executive_member_contact_number[]" value="" placeholder="09xxxxxxxxx"></label>' +
             '<label>Facebook Page<input type="url" name="executive_member_facebook_page[]" value="" placeholder="https://facebook.com/yourpage"></label>' +
             '<label>Picture<input type="file" name="executive_member_picture[]" accept="image/*"></label>' +

@@ -12,9 +12,10 @@ if (is_post()) {
         $congregationName = trim($_POST['congregation_name'] ?? '');
         $congregationAddress = trim($_POST['congregation_address'] ?? '');
         $congregationContactNumber = trim($_POST['congregation_contact_number'] ?? '');
+        $congregationSecRegistrationNumber = trim($_POST['congregation_sec_registration_number'] ?? '');
         $congregationFacebookPage = trim($_POST['congregation_facebook_page'] ?? '');
 
-        if ($congregationName === '' || $congregationAddress === '' || $congregationContactNumber === '') {
+        if ($congregationName === '' || $congregationAddress === '' || $congregationContactNumber === '' || $congregationSecRegistrationNumber === '') {
             throw new RuntimeException('All fields are required.');
         }
 
@@ -41,6 +42,7 @@ if (is_post()) {
         set_setting('congregation_name', $congregationName);
         set_setting('congregation_address', $congregationAddress);
         set_setting('congregation_contact_number', $congregationContactNumber);
+        set_setting('congregation_sec_registration_number', $congregationSecRegistrationNumber);
         set_setting('congregation_facebook_page', $congregationFacebookPage);
         set_setting('congregation_picture', $picturePath);
 
@@ -54,6 +56,7 @@ if (is_post()) {
 $congregationNameValue = get_setting('congregation_name', '');
 $congregationAddressValue = get_setting('congregation_address', '');
 $congregationContactNumberValue = get_setting('congregation_contact_number', '');
+$congregationSecRegistrationNumberValue = get_setting('congregation_sec_registration_number', '');
 $congregationFacebookPageValue = get_setting('congregation_facebook_page', '');
 $presidentValue = get_setting('congregation_president', 'To be announced');
 $executiveBoardValue = get_setting('congregation_executive_board', 'To be announced');
@@ -87,6 +90,11 @@ include __DIR__ . '/../includes/header.php';
         <label>
             Contact Number
             <input type="tel" name="congregation_contact_number" value="<?= e($congregationContactNumberValue) ?>" required>
+        </label>
+
+        <label>
+            SEC Registration Number
+            <input type="text" name="congregation_sec_registration_number" value="<?= e($congregationSecRegistrationNumberValue) ?>" required>
         </label>
 
         <label>

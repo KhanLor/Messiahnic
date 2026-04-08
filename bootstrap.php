@@ -13,6 +13,8 @@ define('DB_USER', getenv('MESSIAH_DB_USER') ?: 'root');
 define('DB_PASS', getenv('MESSIAH_DB_PASS') ?: '');
 define('DB_CHARSET', 'utf8mb4');
 define('GOOGLE_MAPS_API_KEY', getenv('MESSIAH_GOOGLE_MAPS_API_KEY') ?: 'AIzaSyC9JqK9iwTSABGGdxNFOSD15OXH_alO9O8');
+define('GEMINI_API_KEY', getenv('MESSIAH_GEMINI_API_KEY') ?: 'AIzaSyAQQU6NEh4LTPjFG7X1oEUbD1sAlq4lpYQ');
+define('GEMINI_MODEL', getenv('MESSIAH_GEMINI_MODEL') ?: 'gemini-1.5-flash');
 define('LIVE_STREAM_URL', getenv('MESSIAH_LIVE_STREAM_URL') ?: 'https://www.youtube.com/embed/DE8FRQoWZK0');
 
 define('UPLOAD_ROOT', __DIR__ . DIRECTORY_SEPARATOR . 'uploads');
@@ -293,6 +295,145 @@ function facebook_live_embed_url(?string $rawUrl): ?string
     }
 
     return 'https://www.facebook.com/plugins/video.php?href=' . rawurlencode($url) . '&show_text=false&autoplay=true';
+}
+
+function gemini_chat_available(): bool
+{
+    return GEMINI_API_KEY !== '';
+}
+
+function gemini_chat_request(array $contents, string $systemInstruction, array $generationConfig = []): array
+{
+    if (!gemini_chat_available()) {
+        throw new RuntimeException('Gemini API key is not configured.');
+    }
+
+    $payload = [
+        'systemInstruction' => [
+            'parts' => [
+                ['text' => $systemInstruction],
+            ],
+        ],
+        'contents' => $contents,
+        'generationConfig' => $generationConfig + [
+            'temperature' => 0.7,
+            'topP' => 0.95,
+            'maxOutputTokens' => 700,
+        ],
+    ];
+
+    $endpoint = sprintf(
+        'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s',
+        rawurlencode(GEMINI_MODEL),
+        rawurlencode(GEMINI_API_KEY)
+    );
+
+    $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($body === false) {
+        throw new RuntimeException('Unable to prepare Gemini request.');
+    }
+
+    $responseBody = null;
+    $statusCode = 0;
+
+    if (function_exists('curl_init')) {
+        $handle = curl_init($endpoint);
+        if ($handle === false) {
+            throw new RuntimeException('Unable to initialize Gemini request.');
+        }
+
+        curl_setopt_array($handle, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POSTFIELDS => $body,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT => 30,
+        ]);
+
+        $responseBody = curl_exec($handle);
+        $statusCode = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
+        $curlError = curl_error($handle);
+        curl_close($handle);
+
+        if ($responseBody === false || $responseBody === null) {
+            throw new RuntimeException('Gemini request failed' . ($curlError ? ': ' . $curlError : '.'));
+        }
+    } else {
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => "Content-Type: application/json\r\n",
+                'content' => $body,
+                'timeout' => 30,
+                'ignore_errors' => true,
+            ],
+        ]);
+
+        $responseBody = file_get_contents($endpoint, false, $context);
+        $statusCode = 0;
+        if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $matches)) {
+            $statusCode = (int) $matches[1];
+        }
+
+        if ($responseBody === false || $responseBody === null) {
+            throw new RuntimeException('Gemini request failed.');
+        }
+    }
+
+    $decoded = json_decode($responseBody, true);
+    if (!is_array($decoded)) {
+        throw new RuntimeException('Gemini returned an invalid response.');
+    }
+
+    if ($statusCode >= 400) {
+        $message = $decoded['error']['message'] ?? 'Gemini request failed.';
+        throw new RuntimeException($message);
+    }
+
+    return $decoded;
+}
+
+function site_chat_context(): array
+{
+    $context = [
+        'site_name' => APP_NAME,
+        'home_page' => app_url('index.php'),
+        'public_sections' => [
+            'Home',
+            'Teachings',
+            'Scriptures',
+            'Events',
+            'Churches',
+            'About',
+            'Leadership',
+            'Live Broadcast',
+            'Prayer Requests',
+            'Notifications',
+        ],
+    ];
+
+    try {
+        $teachingsStatement = db()->query('SELECT title, category, scripture_reference FROM teachings ORDER BY created_at DESC, id DESC LIMIT 3');
+        $context['recent_teachings'] = $teachingsStatement->fetchAll();
+    } catch (Throwable) {
+        $context['recent_teachings'] = [];
+    }
+
+    try {
+        $eventsStatement = db()->query('SELECT title, date, type FROM events ORDER BY date ASC, id DESC LIMIT 3');
+        $context['upcoming_events'] = $eventsStatement->fetchAll();
+    } catch (Throwable) {
+        $context['upcoming_events'] = [];
+    }
+
+    try {
+        $churchesStatement = db()->query('SELECT name, city FROM church_locations ORDER BY id DESC LIMIT 3');
+        $context['churches'] = $churchesStatement->fetchAll();
+    } catch (Throwable) {
+        $context['churches'] = [];
+    }
+
+    return $context;
 }
 
 function philippines_now(): DateTimeImmutable

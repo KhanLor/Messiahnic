@@ -7,6 +7,7 @@ $pageTitle = 'About Messiahnic Believers';
 $congregationName = get_setting('congregation_name', 'Messiahnic Believers Congregation');
 $congregationAddress = get_setting('congregation_address', 'To be announced');
 $congregationContactNumber = get_setting('congregation_contact_number', 'To be announced');
+$congregationSecRegistrationNumber = get_setting('congregation_sec_registration_number', 'To be announced');
 $congregationFacebookPage = get_setting('congregation_facebook_page', '');
 $congregationPicture = get_setting('congregation_picture', '');
 
@@ -31,6 +32,7 @@ include __DIR__ . '/includes/header.php';
             <h3><?= e($congregationName) ?></h3>
             <p><strong>Address:</strong> <?= e($congregationAddress) ?></p>
             <p><strong>Contact Number:</strong> <?= e($congregationContactNumber) ?></p>
+            <p><strong>SEC Registration Number:</strong> <?= e($congregationSecRegistrationNumber) ?></p>
             <?php if ($congregationFacebookPage): ?>
                 <p><a href="<?= e($congregationFacebookPage) ?>" target="_blank" rel="noopener" aria-label="Facebook page"><i class="fa-brands fa-facebook"></i></a></p>
             <?php endif; ?>

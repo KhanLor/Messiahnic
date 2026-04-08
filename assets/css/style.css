@@ -714,7 +714,7 @@ table td {
 
 .footer-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 1rem;
 }
 
@@ -731,6 +731,11 @@ table td {
 
 .footer-grid li + li {
     margin-top: 0.45rem;
+}
+
+.footer-grid strong {
+    display: block;
+    margin-bottom: 0.5rem;
 }
 
 .kpi-row {

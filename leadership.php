@@ -16,14 +16,16 @@ if (is_array($decodedExecutiveMembers)) {
     foreach ($decodedExecutiveMembers as $member) {
         if (is_array($member)) {
             $name = trim((string) ($member['name'] ?? ''));
+            $address = trim((string) ($member['address'] ?? ''));
             $contactNumber = trim((string) ($member['contact_number'] ?? ''));
             $facebookPage = trim((string) ($member['facebook_page'] ?? ''));
             $picture = trim((string) ($member['picture'] ?? ''));
-            if ($name === '' && $contactNumber === '' && $facebookPage === '' && $picture === '') {
+            if ($name === '' && $address === '' && $contactNumber === '' && $facebookPage === '' && $picture === '') {
                 continue;
             }
             $executiveMembers[] = [
                 'name' => $name,
+                'address' => $address,
                 'contact_number' => $contactNumber,
                 'facebook_page' => $facebookPage,
                 'picture' => $picture,
@@ -34,6 +36,7 @@ if (is_array($decodedExecutiveMembers)) {
         if (is_string($member) && trim($member) !== '') {
             $executiveMembers[] = [
                 'name' => trim($member),
+                'address' => '',
                 'contact_number' => '',
                 'facebook_page' => '',
                 'picture' => '',
@@ -45,6 +48,7 @@ if (is_array($decodedExecutiveMembers)) {
     foreach ($legacyNames as $legacyName) {
         $executiveMembers[] = [
             'name' => $legacyName,
+            'address' => '',
             'contact_number' => '',
             'facebook_page' => '',
             'picture' => '',
@@ -102,6 +106,9 @@ include __DIR__ . '/includes/header.php';
                         </div>
                     <?php endif; ?>
                     <h3><?= e((string) ($member['name'] ?: 'Executive Member')) ?></h3>
+                    <?php if (!empty($member['address'])): ?>
+                        <p><strong>Address:</strong> <?= e((string) $member['address']) ?></p>
+                    <?php endif; ?>
                     <?php if (!empty($member['contact_number'])): ?>
                         <p><strong>Contact Number:</strong> <?= e((string) $member['contact_number']) ?></p>
                     <?php endif; ?>
