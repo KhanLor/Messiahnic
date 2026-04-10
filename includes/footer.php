@@ -8,6 +8,12 @@
             <div>
                 <strong><?= e(APP_NAME) ?></strong>
                 <p>A simple community platform for teachings, scripture study, events, prayer, and fellowship.</p>
+                <p class="developer-credit">
+                    <strong>Developed by</strong>
+                    <a href="https://github.com/KhanLor" target="_blank" rel="noopener">
+                        <i class="fa-brands fa-github"></i> Khanyao R. Lor
+                    </a>
+                </p>
             </div>
             <div>
                 <strong>Explore</strong>
@@ -56,6 +62,10 @@
     </footer>
 </div>
 
-<script src="<?= e(app_url('assets/js/app.js')) ?>"></script>
+<?php
+$scriptAssetPath = __DIR__ . '/../assets/js/app.js';
+$scriptAssetVersion = is_file($scriptAssetPath) ? (string) filemtime($scriptAssetPath) : '1';
+?>
+<script src="<?= e(app_url('assets/js/app.js?v=' . $scriptAssetVersion)) ?>"></script>
 </body>
 </html>

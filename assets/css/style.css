@@ -81,6 +81,13 @@ body.motion-ready .page-shell {
     transform: translateY(0) scale(1);
 }
 
+body.admin-route .reveal-on-scroll,
+body.admin-route .reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+}
+
 @keyframes pageFadeIn {
     from {
         opacity: 0;
@@ -736,6 +743,16 @@ table td {
 .footer-grid strong {
     display: block;
     margin-bottom: 0.5rem;
+}
+
+.developer-credit {
+    margin-top: 0.85rem;
+}
+
+.developer-credit a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
 }
 
 .kpi-row {

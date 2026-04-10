@@ -29,17 +29,23 @@
     const revealTargets = Array.from(
         document.querySelectorAll('.hero, .section, .panel, .card, .kpi, .stat, .list-stack .stack-item')
     );
+    const isAdminPage = window.location.pathname.toLowerCase().includes('/admin/');
 
     revealTargets.forEach((element, index) => {
         element.classList.add('reveal-on-scroll');
         element.style.setProperty('--reveal-delay', `${Math.min(index * 35, 280)}ms`);
     });
 
-    if ('IntersectionObserver' in window) {
+    if (isAdminPage) {
+        revealTargets.forEach((element) => {
+            element.classList.add('is-visible');
+        });
+    } else if ('IntersectionObserver' in window) {
         const revealObserver = new IntersectionObserver(
             (entries, observer) => {
                 entries.forEach((entry) => {
-                    if (!entry.isIntersecting) {
+                    const hasVisiblePixels = entry.intersectionRect.width > 0 && entry.intersectionRect.height > 0;
+                    if (!entry.isIntersecting && !hasVisiblePixels) {
                         return;
                     }
 
@@ -47,7 +53,7 @@
                     observer.unobserve(entry.target);
                 });
             },
-            { threshold: 0.14, rootMargin: '0px 0px -8% 0px' }
+            { threshold: 0.01, rootMargin: '0px 0px -6% 0px' }
         );
 
         revealTargets.forEach((element) => {

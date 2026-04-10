@@ -3,6 +3,10 @@ if (!isset($pageTitle)) {
     $pageTitle = APP_NAME;
 }
 $currentUser = current_user();
+$currentPath = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+$isAdminRoute = strpos($currentPath, '/admin/') !== false;
+$styleAssetPath = __DIR__ . '/../assets/css/style.css';
+$styleAssetVersion = is_file($styleAssetPath) ? (string) filemtime($styleAssetPath) : '1';
 ?>
 <!doctype html>
 <html lang="en" data-theme="light">
@@ -16,13 +20,13 @@ $currentUser = current_user();
     <link rel="icon" type="image/svg+xml" href="<?= e(app_url('assets/images/favicon.svg')) ?>">
     <link rel="shortcut icon" href="<?= e(app_url('assets/images/favicon.svg')) ?>">
     <link rel="apple-touch-icon" href="<?= e(app_url('assets/images/favicon.svg')) ?>">
-    <link rel="stylesheet" href="<?= e(app_url('assets/css/style.css')) ?>">
+    <link rel="stylesheet" href="<?= e(app_url('assets/css/style.css?v=' . $styleAssetVersion)) ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <?php if (!empty($extraHead)): ?>
         <?= $extraHead ?>
     <?php endif; ?>
 </head>
-<body>
+<body class="<?= $isAdminRoute ? 'admin-route' : '' ?>">
 <div class="page-shell">
     <header class="site-header">
         <div class="container nav-wrap">
