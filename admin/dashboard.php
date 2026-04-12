@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/../bootstrap.php';
 require_admin();
+ensure_comments_table();
 
 $pageTitle = 'Admin Dashboard';
 $stats = [
@@ -8,6 +9,7 @@ $stats = [
     'teachings' => 0,
     'events' => 0,
     'pending_prayers' => 0,
+    'pending_comments' => 0,
 ];
 $logs = [];
 
@@ -16,6 +18,7 @@ try {
     $stats['teachings'] = (int) db()->query('SELECT COUNT(*) FROM teachings')->fetchColumn();
     $stats['events'] = (int) db()->query('SELECT COUNT(*) FROM events')->fetchColumn();
     $stats['pending_prayers'] = (int) db()->query('SELECT COUNT(*) FROM prayer_requests WHERE status = "pending"')->fetchColumn();
+    $stats['pending_comments'] = (int) db()->query('SELECT COUNT(*) FROM comments WHERE status = "pending"')->fetchColumn();
     $logs = latest_notifications(8);
 } catch (Throwable $exception) {
     flash('error', 'Dashboard stats are not available yet.');
@@ -33,6 +36,7 @@ include __DIR__ . '/../includes/header.php';
         <div class="kpi"><strong><?= number_format($stats['teachings']) ?></strong><span class="muted">Teachings</span></div>
         <div class="kpi"><strong><?= number_format($stats['events']) ?></strong><span class="muted">Events</span></div>
         <div class="kpi"><strong><?= number_format($stats['pending_prayers']) ?></strong><span class="muted">Pending prayers</span></div>
+        <div class="kpi"><strong><?= number_format($stats['pending_comments']) ?></strong><span class="muted">Pending comments</span></div>
     </div>
 </section>
 
@@ -49,6 +53,7 @@ include __DIR__ . '/../includes/header.php';
             <a class="card" href="<?= e(app_url('admin/events.php')) ?>"><strong>Events</strong><p class="muted">Manage Sabbath and feast day posts.</p></a>
             <a class="card" href="<?= e(app_url('admin/churches.php')) ?>"><strong>Churches</strong><p class="muted">Add and manage church map locations.</p></a>
             <a class="card" href="<?= e(app_url('admin/prayer-requests.php')) ?>"><strong>Prayer requests</strong><p class="muted">Approve or delete requests.</p></a>
+            <a class="card" href="<?= e(app_url('admin/comments.php')) ?>"><strong>Comments</strong><p class="muted">Approve or reject teaching comments.</p></a>
             <a class="card" href="<?= e(app_url('admin/community.php')) ?>"><strong>Live broadcast</strong><p class="muted">Set the Facebook Live URL shown on the site.</p></a>
             <a class="card" href="<?= e(app_url('admin/notifications.php')) ?>"><strong>Notifications</strong><p class="muted">Edit and publish site notifications.</p></a>
             <a class="card" href="<?= e(app_url('admin/about.php')) ?>"><strong>About</strong><p class="muted">Manage congregation info, leadership, and faith summary.</p></a>

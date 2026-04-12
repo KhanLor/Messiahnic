@@ -13,8 +13,6 @@ define('DB_USER', getenv('MESSIAH_DB_USER') ?: 'root');
 define('DB_PASS', getenv('MESSIAH_DB_PASS') ?: '');
 define('DB_CHARSET', 'utf8mb4');
 define('GOOGLE_MAPS_API_KEY', getenv('MESSIAH_GOOGLE_MAPS_API_KEY') ?: 'AIzaSyC9JqK9iwTSABGGdxNFOSD15OXH_alO9O8');
-define('GEMINI_API_KEY', getenv('MESSIAH_GEMINI_API_KEY') ?: 'AIzaSyAQQU6NEh4LTPjFG7X1oEUbD1sAlq4lpYQ');
-define('GEMINI_MODEL', getenv('MESSIAH_GEMINI_MODEL') ?: 'gemini-1.5-flash');
 define('LIVE_STREAM_URL', getenv('MESSIAH_LIVE_STREAM_URL') ?: 'https://www.youtube.com/embed/DE8FRQoWZK0');
 
 define('UPLOAD_ROOT', __DIR__ . DIRECTORY_SEPARATOR . 'uploads');
@@ -250,6 +248,76 @@ CREATE TABLE IF NOT EXISTS site_settings (
 SQL);
 }
 
+function ensure_comments_table(): void
+{
+    db()->exec(<<<SQL
+CREATE TABLE IF NOT EXISTS comments (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NULL,
+    teaching_id INT UNSIGNED NOT NULL,
+    guest_name VARCHAR(150) NULL,
+    guest_email VARCHAR(190) NULL,
+    comment TEXT NOT NULL,
+    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_comments_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_comments_teaching FOREIGN KEY (teaching_id) REFERENCES teachings(id) ON DELETE CASCADE,
+    INDEX idx_comments_teaching (teaching_id),
+    INDEX idx_comments_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+SQL);
+
+    try {
+        db()->exec('ALTER TABLE comments MODIFY user_id INT UNSIGNED NULL');
+    } catch (Throwable) {
+        // Ignore if already nullable.
+    }
+
+    try {
+        db()->exec('ALTER TABLE comments ADD COLUMN guest_name VARCHAR(150) NULL AFTER teaching_id');
+    } catch (Throwable) {
+        // Ignore if the column already exists.
+    }
+
+    try {
+        db()->exec('ALTER TABLE comments ADD COLUMN guest_email VARCHAR(190) NULL AFTER guest_name');
+    } catch (Throwable) {
+        // Ignore if the column already exists.
+    }
+
+    try {
+        // Existing rows from older builds should stay visible, so migrate them as approved first.
+        db()->exec('ALTER TABLE comments ADD COLUMN status ENUM("pending", "approved", "rejected") NOT NULL DEFAULT "approved" AFTER comment');
+    } catch (Throwable) {
+        // Ignore if the column already exists.
+    }
+
+    try {
+        db()->exec('ALTER TABLE comments MODIFY status ENUM("pending", "approved", "rejected") NOT NULL DEFAULT "pending"');
+    } catch (Throwable) {
+        // Ignore if status cannot be modified.
+    }
+
+    try {
+        db()->exec('ALTER TABLE comments DROP FOREIGN KEY fk_comments_user');
+    } catch (Throwable) {
+        // Ignore if the foreign key is absent or has already been changed.
+    }
+
+    try {
+        db()->exec('ALTER TABLE comments ADD CONSTRAINT fk_comments_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL');
+    } catch (Throwable) {
+        // Ignore if the foreign key already exists with the desired behavior.
+    }
+
+    try {
+        db()->exec('ALTER TABLE comments ADD INDEX idx_comments_status (status)');
+    } catch (Throwable) {
+        // Ignore if the index already exists.
+    }
+
+}
+
 function get_setting(string $key, string $default = ''): string
 {
     ensure_site_settings_table();
@@ -297,145 +365,6 @@ function facebook_live_embed_url(?string $rawUrl): ?string
     return 'https://www.facebook.com/plugins/video.php?href=' . rawurlencode($url) . '&show_text=false&autoplay=true';
 }
 
-function gemini_chat_available(): bool
-{
-    return GEMINI_API_KEY !== '';
-}
-
-function gemini_chat_request(array $contents, string $systemInstruction, array $generationConfig = []): array
-{
-    if (!gemini_chat_available()) {
-        throw new RuntimeException('Gemini API key is not configured.');
-    }
-
-    $payload = [
-        'systemInstruction' => [
-            'parts' => [
-                ['text' => $systemInstruction],
-            ],
-        ],
-        'contents' => $contents,
-        'generationConfig' => $generationConfig + [
-            'temperature' => 0.7,
-            'topP' => 0.95,
-            'maxOutputTokens' => 700,
-        ],
-    ];
-
-    $endpoint = sprintf(
-        'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s',
-        rawurlencode(GEMINI_MODEL),
-        rawurlencode(GEMINI_API_KEY)
-    );
-
-    $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    if ($body === false) {
-        throw new RuntimeException('Unable to prepare Gemini request.');
-    }
-
-    $responseBody = null;
-    $statusCode = 0;
-
-    if (function_exists('curl_init')) {
-        $handle = curl_init($endpoint);
-        if ($handle === false) {
-            throw new RuntimeException('Unable to initialize Gemini request.');
-        }
-
-        curl_setopt_array($handle, [
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POSTFIELDS => $body,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_TIMEOUT => 30,
-        ]);
-
-        $responseBody = curl_exec($handle);
-        $statusCode = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
-        $curlError = curl_error($handle);
-        curl_close($handle);
-
-        if ($responseBody === false || $responseBody === null) {
-            throw new RuntimeException('Gemini request failed' . ($curlError ? ': ' . $curlError : '.'));
-        }
-    } else {
-        $context = stream_context_create([
-            'http' => [
-                'method' => 'POST',
-                'header' => "Content-Type: application/json\r\n",
-                'content' => $body,
-                'timeout' => 30,
-                'ignore_errors' => true,
-            ],
-        ]);
-
-        $responseBody = file_get_contents($endpoint, false, $context);
-        $statusCode = 0;
-        if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $matches)) {
-            $statusCode = (int) $matches[1];
-        }
-
-        if ($responseBody === false || $responseBody === null) {
-            throw new RuntimeException('Gemini request failed.');
-        }
-    }
-
-    $decoded = json_decode($responseBody, true);
-    if (!is_array($decoded)) {
-        throw new RuntimeException('Gemini returned an invalid response.');
-    }
-
-    if ($statusCode >= 400) {
-        $message = $decoded['error']['message'] ?? 'Gemini request failed.';
-        throw new RuntimeException($message);
-    }
-
-    return $decoded;
-}
-
-function site_chat_context(): array
-{
-    $context = [
-        'site_name' => APP_NAME,
-        'home_page' => app_url('index.php'),
-        'public_sections' => [
-            'Home',
-            'Teachings',
-            'Scriptures',
-            'Events',
-            'Churches',
-            'About',
-            'Leadership',
-            'Live Broadcast',
-            'Prayer Requests',
-            'Notifications',
-        ],
-    ];
-
-    try {
-        $teachingsStatement = db()->query('SELECT title, category, scripture_reference FROM teachings ORDER BY created_at DESC, id DESC LIMIT 3');
-        $context['recent_teachings'] = $teachingsStatement->fetchAll();
-    } catch (Throwable) {
-        $context['recent_teachings'] = [];
-    }
-
-    try {
-        $eventsStatement = db()->query('SELECT title, date, type FROM events ORDER BY date ASC, id DESC LIMIT 3');
-        $context['upcoming_events'] = $eventsStatement->fetchAll();
-    } catch (Throwable) {
-        $context['upcoming_events'] = [];
-    }
-
-    try {
-        $churchesStatement = db()->query('SELECT name, city FROM church_locations ORDER BY id DESC LIMIT 3');
-        $context['churches'] = $churchesStatement->fetchAll();
-    } catch (Throwable) {
-        $context['churches'] = [];
-    }
-
-    return $context;
-}
-
 function philippines_now(): DateTimeImmutable
 {
     return new DateTimeImmutable('now', new DateTimeZone('Asia/Manila'));
@@ -473,18 +402,18 @@ function ensure_daily_ai_prayers(): void
     $slots = [
         'Morning' => [
             'Almighty Father, as this morning begins, we bow before you with thankful hearts. Fill our minds with your wisdom, direct our steps in righteousness, and guard us from pride and fear. Let your holy peace cover our homes, our work, and our fellowship. Teach us to honor your Name in every word and action, and make us a blessing to everyone we meet today.',
-            'Almighty Elohim, we praise you for the breath of life this morning. Cleanse our hearts, renew our strength, and awaken in us a deeper love for your truth. Help us walk humbly, forgive quickly, and serve joyfully. Let your light lead us through every decision, and keep our families protected under your mercy and covenant love throughout this day.',
-            'Almighty One, we dedicate this new morning to you. Establish our thoughts in holiness, align our plans with your will, and give us courage to obey your word. Pour grace over our households, restore hope where there is heaviness, and let your joy rise in us. May this day reflect your goodness, your compassion, and your unchanging faithfulness.',
+            'Almighty Father, we praise you for the breath of life this morning. Cleanse our hearts, renew our strength, and awaken in us a deeper love for your truth. Help us walk humbly, forgive quickly, and serve joyfully. Let your light lead us through every decision, and keep our families protected under your mercy and covenant love throughout this day.',
+            'Almighty Father, we dedicate this new morning to you. Establish our thoughts in holiness, align our plans with your will, and give us courage to obey your word. Pour grace over our households, restore hope where there is heaviness, and let your joy rise in us. May this day reflect your goodness, your compassion, and your unchanging faithfulness.',
         ],
         'Afternoon' => [
             'Almighty Father, in this afternoon hour renew our strength and steady our hearts. When we feel tired, remind us that your grace is sufficient. Keep our speech gentle, our minds clear, and our hands faithful in every task. Let your wisdom guide our choices, your peace calm our anxieties, and your love shape our relationships so we can honor you in all we do.',
             'Almighty Father, as the day continues, refresh us by your Spirit. Remove distraction and discouragement, and fill us with patient endurance. Teach us to act with integrity, speak with kindness, and serve with compassion. Cover our families, coworkers, and community with your mercy, and let your truth remain the lamp that guides us in this afternoon season.',
-            'Almighty King, we lift our hearts to you this afternoon. Strengthen us in the middle of our responsibilities and help us remain faithful in small and great things. Give us clarity for every decision and humility in every conversation. May your presence rest on us, your favor surround us, and your righteousness be seen through our attitudes and actions.',
+            'Almighty Father, we lift our hearts to you this afternoon. Strengthen us in the middle of our responsibilities and help us remain faithful in small and great things. Give us clarity for every decision and humility in every conversation. May your presence rest on us, your favor surround us, and your righteousness be seen through our attitudes and actions.',
         ],
         'Evening' => [
             'Almighty Father, as evening comes we thank you for carrying us through this day. Forgive our shortcomings, cleanse our hearts, and restore our joy in your presence. Let your peace settle over our homes, protect our families as we rest, and quiet every burden in our minds. Fill this night with your comfort and prepare us to rise tomorrow with faith and renewed hope.',
-            'Almighty Elohim, we close this day in gratitude. Thank you for your mercy, provision, and guidance from morning until now. Wash away fear, disappointment, and fatigue, and replace them with calm trust in you. Surround every household with your protection, heal those who are weary, and grant us restful sleep under the covering of your faithful love.',
-            'Almighty One, we bless your Name in this evening hour. You have sustained us, corrected us, and shown us your kindness. We surrender every concern into your hands and ask for your peace to guard our hearts. Keep watch over our loved ones, renew our spirits while we sleep, and awaken us tomorrow to walk again in your truth and purpose.',
+            'Almighty Father, we close this day in gratitude. Thank you for your mercy, provision, and guidance from morning until now. Wash away fear, disappointment, and fatigue, and replace them with calm trust in you. Surround every household with your protection, heal those who are weary, and grant us restful sleep under the covering of your faithful love.',
+            'Almighty Father, we bless your Name in this evening hour. You have sustained us, corrected us, and shown us your kindness. We surrender every concern into your hands and ask for your peace to guard our hearts. Keep watch over our loved ones, renew our spirits while we sleep, and awaken us tomorrow to walk again in your truth and purpose.',
         ],
     ];
 

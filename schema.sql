@@ -41,13 +41,17 @@ CREATE TABLE IF NOT EXISTS scriptures (
 
 CREATE TABLE IF NOT EXISTS comments (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id INT UNSIGNED NOT NULL,
+    user_id INT UNSIGNED NULL,
     teaching_id INT UNSIGNED NOT NULL,
+    guest_name VARCHAR(150) NULL,
+    guest_email VARCHAR(190) NULL,
     comment TEXT NOT NULL,
+    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_comments_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_comments_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT fk_comments_teaching FOREIGN KEY (teaching_id) REFERENCES teachings(id) ON DELETE CASCADE,
-    INDEX idx_comments_teaching (teaching_id)
+    INDEX idx_comments_teaching (teaching_id),
+    INDEX idx_comments_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS events (
