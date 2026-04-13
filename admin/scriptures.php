@@ -14,7 +14,7 @@ if (is_post()) {
 
         if ($action === 'generate_daily') {
             ensure_daily_ai_savior_scripture();
-            flash('success', 'Today\'s 10 AI Yahushua-focused verses are ready.');
+            flash('success', 'Today\'s 10 AI Yahushua-focused verses were refreshed.');
             redirect('admin/scriptures.php');
         }
 

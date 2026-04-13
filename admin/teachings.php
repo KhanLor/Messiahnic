@@ -6,6 +6,23 @@ $pageTitle = 'Manage Teachings';
 $error = null;
 $editingTeaching = null;
 
+function is_youtube_url(string $url): bool
+{
+    $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+    if ($host === '') {
+        return false;
+    }
+
+    $allowedHosts = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'www.youtu.be'];
+    return in_array($host, $allowedHosts, true);
+}
+
+function normalize_url(?string $value): ?string
+{
+    $value = trim((string) $value);
+    return $value === '' ? null : $value;
+}
+
 if (is_post()) {
     try {
         verify_csrf();
@@ -18,9 +35,12 @@ if (is_post()) {
             $teaching = $lookup->fetch();
 
             if (!empty($teaching['media_path'])) {
-                $absolutePath = __DIR__ . '/../' . ltrim($teaching['media_path'], '/');
-                if (is_file($absolutePath)) {
-                    unlink($absolutePath);
+                $isLocalFile = parse_url((string) $teaching['media_path'], PHP_URL_SCHEME) === null;
+                if ($isLocalFile) {
+                    $absolutePath = __DIR__ . '/../' . ltrim((string) $teaching['media_path'], '/');
+                    if (is_file($absolutePath)) {
+                        unlink($absolutePath);
+                    }
                 }
             }
 
@@ -41,6 +61,15 @@ if (is_post()) {
             throw new RuntimeException('All teaching fields are required.');
         }
 
+        $youtubeUrl = normalize_url($_POST['youtube_url'] ?? null);
+        if ($youtubeUrl === null) {
+            throw new RuntimeException('Please paste a YouTube video URL.');
+        }
+
+        if (!is_youtube_url($youtubeUrl)) {
+            throw new RuntimeException('Please enter a valid YouTube URL.');
+        }
+
         $mediaPath = null;
         $mediaType = null;
         if ($action === 'update' && $teachingId > 0) {
@@ -51,16 +80,8 @@ if (is_post()) {
             $mediaType = $existing['media_type'] ?? null;
         }
 
-        if (!empty($_FILES['media_file']['name'])) {
-            if (!empty($mediaPath)) {
-                $absolutePath = __DIR__ . '/../' . ltrim($mediaPath, '/');
-                if (is_file($absolutePath)) {
-                    unlink($absolutePath);
-                }
-            }
-            $mediaPath = upload_file($_FILES['media_file'], 'teachings', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'pdf']);
-            $mediaType = $_FILES['media_file']['type'] ?? null;
-        }
+        $mediaPath = $youtubeUrl;
+        $mediaType = 'youtube';
 
         if ($action === 'update') {
             if ($teachingId <= 0) {
@@ -118,6 +139,12 @@ $titleValue = old('title', $editingTeaching['title'] ?? '');
 $contentValue = old('content', $editingTeaching['content'] ?? '');
 $categoryValue = old('category', $editingTeaching['category'] ?? '');
 $referenceValue = old('scripture_reference', $editingTeaching['scripture_reference'] ?? '');
+$youtubeValue = old(
+    'youtube_url',
+    (!empty($editingTeaching['media_path']) && (($editingTeaching['media_type'] ?? '') === 'youtube' || is_youtube_url((string) $editingTeaching['media_path'])))
+        ? $editingTeaching['media_path']
+        : ''
+);
 
 include __DIR__ . '/../includes/header.php';
 ?>
@@ -173,7 +200,7 @@ include __DIR__ . '/../includes/header.php';
             <button class="modal-close" type="button" data-close-modal aria-label="Close modal">×</button>
         </div>
 
-        <form class="form" method="post" enctype="multipart/form-data">
+        <form class="form" method="post">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="<?= e($formAction) ?>">
             <?php if ($isEditMode): ?>
@@ -198,8 +225,12 @@ include __DIR__ . '/../includes/header.php';
                 </label>
             </div>
             <label>
-                Upload scripture, image, or video
-                <input type="file" name="media_file" accept="image/*,video/*,.pdf">
+                Paste YouTube video link
+                <div class="field-inline">
+                    <input type="url" name="youtube_url" id="youtube_url" value="<?= e($youtubeValue) ?>" placeholder="https://www.youtube.com/watch?v=..." required>
+                    <button class="btn btn-ghost" type="button" id="pasteYouTubeLink">Paste link</button>
+                </div>
+                <small class="muted">Copy a YouTube URL, then click Paste link.</small>
             </label>
             <div class="actions">
                 <button class="btn btn-primary" type="submit"><?= e($submitLabel) ?></button>
@@ -211,5 +242,24 @@ include __DIR__ . '/../includes/header.php';
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('click', async function (event) {
+    if (event.target && event.target.id === 'pasteYouTubeLink') {
+        const input = document.getElementById('youtube_url');
+        if (!input || !navigator.clipboard || !navigator.clipboard.readText) {
+            return;
+        }
+
+        try {
+            const text = await navigator.clipboard.readText();
+            input.value = text.trim();
+            input.focus();
+        } catch (error) {
+            // Clipboard access can be blocked by browser permissions.
+        }
+    }
+});
+</script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

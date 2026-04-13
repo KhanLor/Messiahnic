@@ -6,6 +6,37 @@ $pageTitle = 'Teaching';
 $error = null;
 ensure_comments_table();
 
+function extract_youtube_video_id(string $url): ?string
+{
+    if ($url === '') {
+        return null;
+    }
+
+    $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+    if ($host === '') {
+        return null;
+    }
+
+    if (in_array($host, ['youtu.be', 'www.youtu.be'], true)) {
+        $path = trim((string) parse_url($url, PHP_URL_PATH), '/');
+        return $path !== '' ? $path : null;
+    }
+
+    if (in_array($host, ['youtube.com', 'www.youtube.com', 'm.youtube.com'], true)) {
+        parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+        if (!empty($query['v'])) {
+            return (string) $query['v'];
+        }
+
+        $path = trim((string) parse_url($url, PHP_URL_PATH), '/');
+        if (str_starts_with($path, 'embed/')) {
+            return substr($path, 6) ?: null;
+        }
+    }
+
+    return null;
+}
+
 if ($teachingId <= 0) {
     flash('error', 'Teaching not found.');
     redirect('teachings.php');
@@ -85,12 +116,27 @@ try {
 }
 
 include __DIR__ . '/includes/header.php';
+
+$mediaPath = (string) ($teaching['media_path'] ?? '');
+$youtubeVideoId = extract_youtube_video_id($mediaPath);
+$isExternalMedia = $mediaPath !== '' && parse_url($mediaPath, PHP_URL_SCHEME) !== null;
 ?>
 <section class="grid cols-2">
     <article class="panel">
-        <?php if (!empty($teaching['media_path'])): ?>
+        <?php if ($youtubeVideoId !== null): ?>
+            <div class="badge"><i class="fa-brands fa-youtube"></i> YouTube video</div>
+            <div style="position: relative; width: 100%; padding-top: 56.25%; margin-top: 0.8rem; border-radius: 14px; overflow: hidden;">
+                <iframe
+                    src="<?= e('https://www.youtube.com/embed/' . $youtubeVideoId) ?>"
+                    title="Teaching video"
+                    style="position: absolute; inset: 0; width: 100%; height: 100%; border: 0;"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                ></iframe>
+            </div>
+        <?php elseif ($mediaPath !== ''): ?>
             <div class="badge"><i class="fa-solid fa-photo-film"></i> Media attached</div>
-            <p><a href="<?= e(app_url($teaching['media_path'])) ?>" target="_blank" rel="noreferrer">Open uploaded file</a></p>
+            <p><a href="<?= e($isExternalMedia ? $mediaPath : app_url($mediaPath)) ?>" target="_blank" rel="noreferrer">Open attached file</a></p>
         <?php endif; ?>
         <div class="meta">
             <span class="badge"><?= e($teaching['category']) ?></span>

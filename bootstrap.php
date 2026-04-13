@@ -530,6 +530,7 @@ function ensure_daily_ai_savior_scripture(): void
     // Normalize older rows to keep Yahushua wording consistent.
     db()->exec('UPDATE scriptures SET content = REPLACE(content, "Jesus", "Yahushua")');
     db()->exec('UPDATE scriptures SET content = REPLACE(content, "God", "Almighty Father")');
+    db()->exec("UPDATE scriptures SET content = REPLACE(content, 'AI Daily Verse:', 'Daily Verse:')");
 
     $todaySqlDate = philippines_now()->format('Y-m-d');
     $lastGeneratedDate = get_setting('daily_ai_scripture_date', '');
@@ -537,6 +538,14 @@ function ensure_daily_ai_savior_scripture(): void
     $quotaCount = (int) get_setting('daily_ai_scripture_quota_count', '0');
 
     if ($quotaDate !== $todaySqlDate) {
+        $quotaCount = 0;
+    }
+
+    $isNewDay = $lastGeneratedDate !== $todaySqlDate;
+
+    if ($isNewDay) {
+        // Keep daily AI verses fresh by replacing yesterday's set instead of accumulating duplicates.
+        db()->exec("DELETE FROM scriptures WHERE content LIKE 'Daily Verse:%'");
         $quotaCount = 0;
     }
 
@@ -550,117 +559,121 @@ function ensure_daily_ai_savior_scripture(): void
             'book' => 'Acts',
             'chapter' => 4,
             'verse' => '12',
-            'content' => 'AI Daily Verse: Yahushua is our true Savior, and salvation is found in no other name under heaven for mankind.',
+            'content' => 'Daily Verse: Yahushua is our true Savior, and salvation is found in no other name under heaven for mankind.',
             'group' => 'Gospel',
         ],
         [
             'book' => 'John',
             'chapter' => 14,
             'verse' => '6',
-            'content' => 'AI Daily Verse: Yahushua declares the way, the truth, and the life, revealing that rescue and life come through him.',
+            'content' => 'Daily Verse: Yahushua declares the way, the truth, and the life, revealing that rescue and life come through him.',
             'group' => 'Gospel',
         ],
         [
             'book' => 'Matthew',
             'chapter' => 1,
             'verse' => '21',
-            'content' => 'AI Daily Verse: Yahushua saves his people from sin, showing his mission as the true Savior promised from the beginning.',
+            'content' => 'Daily Verse: Yahushua saves his people from sin, showing his mission as the true Savior promised from the beginning.',
             'group' => 'Gospel',
         ],
         [
             'book' => '1 John',
             'chapter' => 4,
             'verse' => '14',
-            'content' => 'AI Daily Verse: The testimony affirms Yahushua as Savior, sent to bring life, peace, and reconciliation.',
+            'content' => 'Daily Verse: The testimony affirms Yahushua as Savior, sent to bring life, peace, and reconciliation.',
             'group' => 'Gospel',
         ],
         [
             'book' => 'Romans',
             'chapter' => 10,
             'verse' => '9',
-            'content' => 'AI Daily Verse: Trusting and confessing Yahushua brings salvation and establishes faithful obedience.',
+            'content' => 'Daily Verse: Trusting and confessing Yahushua brings salvation and establishes faithful obedience.',
             'group' => 'Gospel',
         ],
         [
             'book' => 'Philippians',
             'chapter' => 2,
             'verse' => '9-11',
-            'content' => 'AI Daily Verse: Yahushua is exalted above all names, and every knee will bow in reverence to his authority.',
+            'content' => 'Daily Verse: Yahushua is exalted above all names, and every knee will bow in reverence to his authority.',
             'group' => 'Gospel',
         ],
         [
             'book' => 'Hebrews',
             'chapter' => 7,
             'verse' => '25',
-            'content' => 'AI Daily Verse: Yahushua saves completely those who come near through him, and his intercession remains faithful.',
+            'content' => 'Daily Verse: Yahushua saves completely those who come near through him, and his intercession remains faithful.',
             'group' => 'Gospel',
         ],
         [
             'book' => 'John',
             'chapter' => 3,
             'verse' => '16-17',
-            'content' => 'AI Daily Verse: Through Yahushua, the world is offered life and deliverance, revealing the mercy and purpose of the Almighty Father.',
+            'content' => 'Daily Verse: Through Yahushua, the world is offered life and deliverance, revealing the mercy and purpose of the Almighty Father.',
             'group' => 'Gospel',
         ],
         [
             'book' => 'Luke',
             'chapter' => 19,
             'verse' => '10',
-            'content' => 'AI Daily Verse: Yahushua came to seek and save the lost, showing his mission as true Savior.',
+            'content' => 'Daily Verse: Yahushua came to seek and save the lost, showing his mission as true Savior.',
             'group' => 'Gospel',
         ],
         [
             'book' => 'Titus',
             'chapter' => 2,
             'verse' => '13',
-            'content' => 'AI Daily Verse: Believers wait in hope for Yahushua, whose appearing confirms salvation and faithful expectation.',
+            'content' => 'Daily Verse: Believers wait in hope for Yahushua, whose appearing confirms salvation and faithful expectation.',
             'group' => 'Gospel',
         ],
         [
             'book' => '2 Timothy',
             'chapter' => 1,
             'verse' => '10',
-            'content' => 'AI Daily Verse: Yahushua brings life and immortality to light, revealing the power of salvation.',
+            'content' => 'Daily Verse: Yahushua brings life and immortality to light, revealing the power of salvation.',
             'group' => 'Gospel',
         ],
         [
             'book' => 'Isaiah',
             'chapter' => 53,
             'verse' => '5',
-            'content' => 'AI Daily Verse: The suffering servant prophecy points to Yahushua, through whom healing, peace, and restoration are given.',
+            'content' => 'Daily Verse: The suffering servant prophecy points to Yahushua, through whom healing, peace, and restoration are given.',
             'group' => 'Prophets',
         ],
         [
             'book' => 'John',
             'chapter' => 11,
             'verse' => '25',
-            'content' => 'AI Daily Verse: Yahushua is the resurrection and the life, assuring victory over death to those who trust him.',
+            'content' => 'Daily Verse: Yahushua is the resurrection and the life, assuring victory over death to those who trust him.',
             'group' => 'Gospel',
         ],
         [
             'book' => 'Acts',
             'chapter' => 13,
             'verse' => '38-39',
-            'content' => 'AI Daily Verse: Through Yahushua, forgiveness and justification are proclaimed to all who believe.',
+            'content' => 'Daily Verse: Through Yahushua, forgiveness and justification are proclaimed to all who believe.',
             'group' => 'Gospel',
         ],
         [
             'book' => '1 Peter',
             'chapter' => 1,
             'verse' => '3',
-            'content' => 'AI Daily Verse: Through Yahushua, living hope rises by resurrection power and covenant mercy.',
+            'content' => 'Daily Verse: Through Yahushua, living hope rises by resurrection power and covenant mercy.',
             'group' => 'Gospel',
         ],
         [
             'book' => 'Revelation',
             'chapter' => 1,
             'verse' => '5',
-            'content' => 'AI Daily Verse: Yahushua, faithful witness and ruler, loves and frees believers from sin by his sacrifice.',
+            'content' => 'Daily Verse: Yahushua, faithful witness and ruler, loves and frees believers from sin by his sacrifice.',
             'group' => 'Gospel',
         ],
     ];
 
     $startIndex = (int) (abs(crc32($todaySqlDate)) % count($dailyPack));
+    $lastStartIndex = (int) get_setting('daily_ai_scripture_start_index', '-1');
+    if ($isNewDay && $startIndex === $lastStartIndex) {
+        $startIndex = ($startIndex + 1) % count($dailyPack);
+    }
     $remainingCount = max(0, $dailyTarget - $quotaCount);
     $dailyCount = min($remainingCount, count($dailyPack));
 
@@ -686,6 +699,7 @@ function ensure_daily_ai_savior_scripture(): void
     set_setting('daily_ai_scripture_date', $todaySqlDate);
     set_setting('daily_ai_scripture_quota_date', $todaySqlDate);
     set_setting('daily_ai_scripture_quota_count', (string) ($quotaCount + $dailyCount));
+    set_setting('daily_ai_scripture_start_index', (string) $startIndex);
 }
 
 function upload_file(array $file, string $folder, array $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'pdf']): ?string

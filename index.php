@@ -21,6 +21,7 @@ $dailyVersesPerPage = 5;
 $dailyVersePage = max(1, (int) ($_GET['verse_page'] ?? 1));
 $totalDailyVerses = 0;
 $totalDailyVersePages = 1;
+$maxVisibleVerseLinks = 7;
 $notifications = [];
 $liveStreamUrl = LIVE_STREAM_URL;
 $heroWorshipImage = app_url('assets/images/home/hero-worship.jpg');
@@ -54,14 +55,14 @@ try {
         $upcomingEvents = db()->query('SELECT * FROM events ORDER BY date DESC, id DESC LIMIT 3')->fetchAll();
     }
     $latestPrayers = db()->query('SELECT pr.id, pr.message, pr.created_at, u.name FROM prayer_requests pr JOIN users u ON u.id = pr.user_id WHERE pr.status = "approved" AND u.role = "admin" ORDER BY pr.created_at DESC, pr.id DESC LIMIT 3')->fetchAll();
-    $totalDailyVerses = (int) db()->query("SELECT COUNT(*) FROM scriptures WHERE content LIKE 'AI Daily Verse:%'")->fetchColumn();
+    $totalDailyVerses = (int) db()->query("SELECT COUNT(*) FROM scriptures WHERE content LIKE 'Daily Verse:%'")->fetchColumn();
     $totalDailyVersePages = max(1, (int) ceil($totalDailyVerses / $dailyVersesPerPage));
     if ($dailyVersePage > $totalDailyVersePages) {
         $dailyVersePage = $totalDailyVersePages;
     }
 
     $dailyVerseOffset = ($dailyVersePage - 1) * $dailyVersesPerPage;
-    $dailyVerseStatement = db()->prepare("SELECT id, book, chapter, verse, content, testament_group FROM scriptures WHERE content LIKE 'AI Daily Verse:%' ORDER BY id DESC LIMIT ? OFFSET ?");
+    $dailyVerseStatement = db()->prepare("SELECT id, book, chapter, verse, content, testament_group FROM scriptures WHERE content LIKE 'Daily Verse:%' ORDER BY id DESC LIMIT ? OFFSET ?");
     $dailyVerseStatement->bindValue(1, $dailyVersesPerPage, PDO::PARAM_INT);
     $dailyVerseStatement->bindValue(2, $dailyVerseOffset, PDO::PARAM_INT);
     $dailyVerseStatement->execute();
@@ -72,6 +73,20 @@ try {
 }
 
 $believersDisplay = $stats['believers'] < 100 ? '100+' : number_format($stats['believers']) . '+';
+
+$versePageBaseParams = $_GET;
+unset($versePageBaseParams['verse_page']);
+$buildVersePageUrl = static function (int $page) use ($versePageBaseParams): string {
+    $params = $versePageBaseParams;
+    if ($page > 1) {
+        $params['verse_page'] = $page;
+    }
+
+    $query = http_build_query($params);
+    $path = 'index.php' . ($query !== '' ? '?' . $query : '');
+
+    return app_url($path) . '#daily-verses';
+};
 
 include __DIR__ . '/includes/header.php';
 ?>
@@ -246,14 +261,14 @@ include __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<section class="section panel">
+<section class="section panel" id="daily-verses">
     <div class="section-title">
         <h2>Daily verses</h2>
         <a class="muted" href="<?= e(app_url('scriptures.php')) ?>">Scripture library</a>
     </div>
     <div class="list-stack">
         <?php foreach ($dailyAiVerses as $verse): ?>
-            <?php $verseContent = preg_replace('/^AI Daily Verse:\s*/', '', (string) $verse['content']) ?: (string) $verse['content']; ?>
+            <?php $verseContent = preg_replace('/^Daily Verse:\s*/', '', (string) $verse['content']) ?: (string) $verse['content']; ?>
             <article class="stack-item">
                 <div class="meta">
                     <span class="badge"><?= e($verse['testament_group']) ?></span>
@@ -271,17 +286,37 @@ include __DIR__ . '/includes/header.php';
     </div>
 
     <?php if ($totalDailyVersePages > 1): ?>
+        <?php
+            $windowHalf = (int) floor($maxVisibleVerseLinks / 2);
+            $startVersePage = max(1, $dailyVersePage - $windowHalf);
+            $endVersePage = min($totalDailyVersePages, $startVersePage + $maxVisibleVerseLinks - 1);
+            $startVersePage = max(1, $endVersePage - $maxVisibleVerseLinks + 1);
+        ?>
         <nav class="pagination" aria-label="Daily verses pages">
             <?php if ($dailyVersePage > 1): ?>
-                <a class="page-link" href="<?= e(app_url('index.php?verse_page=' . ($dailyVersePage - 1))) ?>">Previous</a>
+                <a class="page-link" href="<?= e($buildVersePageUrl($dailyVersePage - 1)) ?>">Previous</a>
             <?php endif; ?>
 
-            <?php for ($i = 1; $i <= $totalDailyVersePages; $i++): ?>
-                <a class="page-link <?= $i === $dailyVersePage ? 'is-active' : '' ?>" href="<?= e(app_url('index.php?verse_page=' . $i)) ?>"><?= (int) $i ?></a>
+            <?php if ($startVersePage > 1): ?>
+                <a class="page-link" href="<?= e($buildVersePageUrl(1)) ?>">1</a>
+                <?php if ($startVersePage > 2): ?>
+                    <span class="page-link" aria-hidden="true">...</span>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <?php for ($i = $startVersePage; $i <= $endVersePage; $i++): ?>
+                <a class="page-link <?= $i === $dailyVersePage ? 'is-active' : '' ?>" href="<?= e($buildVersePageUrl($i)) ?>"><?= (int) $i ?></a>
             <?php endfor; ?>
 
+            <?php if ($endVersePage < $totalDailyVersePages): ?>
+                <?php if ($endVersePage < $totalDailyVersePages - 1): ?>
+                    <span class="page-link" aria-hidden="true">...</span>
+                <?php endif; ?>
+                <a class="page-link" href="<?= e($buildVersePageUrl($totalDailyVersePages)) ?>"><?= (int) $totalDailyVersePages ?></a>
+            <?php endif; ?>
+
             <?php if ($dailyVersePage < $totalDailyVersePages): ?>
-                <a class="page-link" href="<?= e(app_url('index.php?verse_page=' . ($dailyVersePage + 1))) ?>">Next</a>
+                <a class="page-link" href="<?= e($buildVersePageUrl($dailyVersePage + 1)) ?>">Next</a>
             <?php endif; ?>
         </nav>
     <?php endif; ?>

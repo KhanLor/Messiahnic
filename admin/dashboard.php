@@ -48,7 +48,7 @@ include __DIR__ . '/../includes/header.php';
         </div>
         <div class="grid cols-2">
             <a class="card" href="<?= e(app_url('admin/users.php')) ?>"><strong>Users</strong><p class="muted">Activate, deactivate, and assign roles.</p></a>
-            <a class="card" href="<?= e(app_url('admin/teachings.php')) ?>"><strong>Teachings</strong><p class="muted">Create teachings and upload media.</p></a>
+            <a class="card" href="<?= e(app_url('admin/teachings.php')) ?>"><strong>Teachings</strong><p class="muted">Create teachings and add YouTube links.</p></a>
             <a class="card" href="<?= e(app_url('admin/scriptures.php')) ?>"><strong>Scriptures</strong><p class="muted">Add and highlight verses.</p></a>
             <a class="card" href="<?= e(app_url('admin/events.php')) ?>"><strong>Events</strong><p class="muted">Manage Sabbath and feast day posts.</p></a>
             <a class="card" href="<?= e(app_url('admin/churches.php')) ?>"><strong>Churches</strong><p class="muted">Add and manage church map locations.</p></a>
